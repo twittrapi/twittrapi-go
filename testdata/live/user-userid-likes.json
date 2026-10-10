@@ -1,0 +1,10 @@
+{
+ "data": {
+  "user": {
+   "result": {
+    "__typename": "User",
+    "timeline": {}
+   }
+  }
+ }
+}

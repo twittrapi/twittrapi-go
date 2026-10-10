@@ -254,6 +254,24 @@ func CountTimelineEntries(data []byte) (items, cursors int) {
 	return items, cursors
 }
 
+// sliceItems reports whether a raw response uses X's slice shape (an "items_results" array,
+// as in community search, community members and job search) and how many items those arrays
+// hold in total.
+func sliceItems(data []byte) (isSlice bool, items int) {
+	root, err := parseOrdered(data)
+	if err != nil {
+		return false, 0
+	}
+	walk(root, func(obj *node) bool {
+		if v := obj.get("items_results"); v != nil && v.kind == 'a' {
+			isSlice = true
+			items += len(v.vals)
+		}
+		return true
+	})
+	return isSlice, items
+}
+
 // Page is one page returned by a [PageIterator].
 type Page struct {
 	// Data is the raw JSON of this page.
@@ -310,6 +328,7 @@ type PageIterator struct {
 //   - no bottom cursor is found,
 //   - the cursor repeats,
 //   - a page contains timeline entries but all of them are cursors (no results),
+//   - a slice-shaped page (items_results + slice_info.next_cursor) has no items,
 //   - a request fails (see [PageIterator.Err]).
 //
 // Cursor detection is best-effort; see [ExtractCursors]. opts may be nil.
@@ -354,6 +373,10 @@ func (it *PageIterator) Next() bool {
 			return false
 		}
 		if items, cursors := CountTimelineEntries(it.page.Data); items == 0 && cursors > 0 {
+			it.done = true
+			return false
+		}
+		if isSlice, items := sliceItems(it.page.Data); isSlice && items == 0 {
 			it.done = true
 			return false
 		}

@@ -6,6 +6,17 @@ All notable changes to this module are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `Paginate` stops when a slice-shaped page (community search, community members, job search:
+  `items_results` + `slice_info.next_cursor`) has no items, instead of following its cursor.
+- Examples: `extract.Tweets` uses the original full text for retweets (new `RetweetOf` field)
+  and `extract.Users` also reads `{"result": User}` items (users by IDs, community members).
+
+### Added
+
+- Table tests against trimmed real API responses in `testdata/live` for every paginated shape.
+
 ## [0.1.0] - 2026-10-10
 
 ### Added

@@ -30,6 +30,7 @@ type Tweet struct {
 	Retweets  int64  `json:"retweets"`
 	Replies   int64  `json:"replies"`
 	Views     int64  `json:"views"`
+	RetweetOf string `json:"retweetOf,omitempty"` // for a retweet: username of the original author
 }
 
 // Walk calls fn for every JSON object in v, depth first.
@@ -90,7 +91,8 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-// Users returns the users in a response, de-duplicated by ID, in no particular order.
+// Users returns the users in a response (user_results.result, or a plain {"result": User}
+// item), de-duplicated by ID, in no particular order.
 func Users(raw []byte) []User {
 	data, err := Decode(raw)
 	if err != nil {
@@ -100,7 +102,10 @@ func Users(raw []byte) []User {
 	var out []User
 	Walk(data, func(m map[string]any) {
 		u := obj(m, "user_results", "result")
-		if u == nil || str(u, "__typename") != "User" || seen[str(u, "rest_id")] {
+		if u == nil {
+			u = obj(m, "result") // users by IDs and community members: {"result": {User}}
+		}
+		if u == nil || str(u, "__typename") != "User" || str(u, "rest_id") == "" || seen[str(u, "rest_id")] {
 			return
 		}
 		seen[str(u, "rest_id")] = true
@@ -133,6 +138,25 @@ func Users(raw []byte) []User {
 	return out
 }
 
+// unwrapTweet returns the tweet inside a TweetWithVisibilityResults wrapper, or t itself.
+func unwrapTweet(t map[string]any) map[string]any {
+	if t != nil && str(t, "__typename") == "TweetWithVisibilityResults" {
+		return obj(t, "tweet")
+	}
+	return t
+}
+
+// tweetText is the long-form note_tweet text when present, else legacy.full_text.
+func tweetText(t map[string]any) string {
+	return firstNonEmpty(str(obj(t, "note_tweet", "note_tweet_results", "result"), "text"), str(obj(t, "legacy"), "full_text"))
+}
+
+// screenName is the tweet author's handle (core.screen_name since 2025, legacy before).
+func screenName(t map[string]any) string {
+	author := obj(t, "core", "user_results", "result")
+	return firstNonEmpty(str(obj(author, "core"), "screen_name"), str(obj(author, "legacy"), "screen_name"))
+}
+
 // Tweets returns the tweets in a response, de-duplicated by ID, newest first (by ID).
 func Tweets(raw []byte) []Tweet {
 	data, err := Decode(raw)
@@ -142,29 +166,28 @@ func Tweets(raw []byte) []Tweet {
 	seen := map[string]bool{}
 	var out []Tweet
 	Walk(data, func(m map[string]any) {
-		t := obj(m, "tweet_results", "result")
-		if t != nil && str(t, "__typename") == "TweetWithVisibilityResults" {
-			t = obj(t, "tweet")
-		}
+		t := unwrapTweet(obj(m, "tweet_results", "result")) // nil for empty tweet_results: skipped
 		legacy := obj(t, "legacy")
-		if legacy == nil || seen[str(t, "rest_id")] {
+		if legacy == nil || str(t, "rest_id") == "" || seen[str(t, "rest_id")] {
 			return
 		}
 		seen[str(t, "rest_id")] = true
-		author := obj(t, "core", "user_results", "result")
-		text := str(obj(t, "note_tweet", "note_tweet_results", "result"), "text")
-		if text == "" {
-			text = str(legacy, "full_text")
+		text, retweetOf := tweetText(t), ""
+		// A retweet's own full_text is "RT @user: " plus a truncated copy; use the original.
+		if orig := unwrapTweet(obj(legacy, "retweeted_status_result", "result")); obj(orig, "legacy") != nil {
+			retweetOf = screenName(orig)
+			text = "RT @" + retweetOf + ": " + tweetText(orig)
 		}
 		out = append(out, Tweet{
 			ID:        str(t, "rest_id"),
 			CreatedAt: str(legacy, "created_at"),
-			Author:    firstNonEmpty(str(obj(author, "core"), "screen_name"), str(obj(author, "legacy"), "screen_name")),
+			Author:    screenName(t),
 			Text:      text,
 			Likes:     num(legacy, "favorite_count"),
 			Retweets:  num(legacy, "retweet_count"),
 			Replies:   num(legacy, "reply_count"),
 			Views:     num(obj(t, "views"), "count"),
+			RetweetOf: retweetOf,
 		})
 	})
 	// Tweet IDs grow over time, so sorting by ID sorts by time.

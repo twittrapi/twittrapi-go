@@ -1,0 +1,8 @@
+.DS_Store
+.env
+*.test
+*.out
+coverage.txt
+# Output of the example programs
+*-followers.csv
+*-tweets.json

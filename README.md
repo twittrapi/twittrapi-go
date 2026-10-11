@@ -3,9 +3,9 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/twittrapi/twittrapi-go.svg)](https://pkg.go.dev/github.com/twittrapi/twittrapi-go)
 [![CI](https://github.com/twittrapi/twittrapi-go/actions/workflows/ci.yml/badge.svg)](https://github.com/twittrapi/twittrapi-go/actions/workflows/ci.yml)
 
-Official Go SDK for [TwittrAPI](https://twittrapi.com): read tweets, user profiles, followers,
-search results, lists, communities and trends from Twitter/X in Go, with no X developer
-account needed.
+Official Go SDK for [TwittrAPI](https://twittrapi.com), a REST API for public Twitter/X data:
+tweets, profiles, followers, search, lists and communities. From $0.065 per 1,000 calls, no X
+developer account.
 
 > **Get an API key:** [twittrapi.com/start](https://twittrapi.com/start?utm_source=github&utm_medium=readme&utm_campaign=twittrapi-go) · [Pricing](https://twittrapi.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=twittrapi-go) · [Docs](https://twittrapi.com/docs?utm_source=github&utm_medium=readme&utm_campaign=twittrapi-go) · also available on [RapidAPI](https://rapidapi.com/viperscores-viperscores-default/api/twitter-aio)
 

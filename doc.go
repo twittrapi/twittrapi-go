@@ -1,6 +1,6 @@
 // Package twittrapi is the official Go client for TwittrAPI (https://twittrapi.com), a
-// Twitter/X data API. It reads profiles, tweets, followers, search results, lists,
-// communities and trends.
+// REST API for public Twitter/X data. It reads tweets, profiles, followers, search results,
+// lists, communities and trends.
 //
 // The package uses only the standard library.
 //

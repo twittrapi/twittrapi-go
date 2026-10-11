@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "woeid": 1,
+      "name": "Worldwide",
+      "country": "",
+      "countryCode": null,
+      "placeType": "Supername",
+      "parentId": 0
+    },
+    {
+      "woeid": 638242,
+      "name": "Berlin",
+      "country": "Germany",
+      "countryCode": "DE",
+      "placeType": "Town",
+      "parentId": 23424829
+    }
+  ],
+  "nextCursor": null,
+  "previousCursor": null,
+  "hasNextPage": false
+}

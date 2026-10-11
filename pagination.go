@@ -281,7 +281,8 @@ type Page struct {
 	// Cursor is the cursor used to request this page ("" for the first page unless one was
 	// passed in the params).
 	Cursor string
-	// NextCursor is the bottom cursor found in this page, or "" if none was found.
+	// NextCursor is the bottom cursor found in this page, or "" if none was found. For a page
+	// in the simple format it is nextCursor, or "" when hasNextPage is false.
 	NextCursor string
 }
 
@@ -331,7 +332,11 @@ type PageIterator struct {
 //   - a slice-shaped page (items_results + slice_info.next_cursor) has no items,
 //   - a request fails (see [PageIterator.Err]).
 //
-// Cursor detection is best-effort; see [ExtractCursors]. opts may be nil.
+// Pages in the simple format (format=simple, see [WithFormat]) are recognized by their
+// envelope: iteration follows nextCursor and stops when hasNextPage is false or nextCursor
+// is null. For typed pages use [PaginateSimple].
+//
+// Cursor detection in raw responses is best-effort; see [ExtractCursors]. opts may be nil.
 func Paginate[P Pageable[P]](ctx context.Context, fn PageFunc[P], params P, opts *PaginateOptions) *PageIterator {
 	maxPages := DefaultMaxPages
 	if opts != nil && opts.MaxPages != 0 {
@@ -389,11 +394,18 @@ func (it *PageIterator) Next() bool {
 		it.done = true
 		return false
 	}
+	next := ""
+	if simple, cursor := simplePageEnvelope(data); simple {
+		// Simple format: nextCursor is null (or hasNextPage false) on the last page.
+		next = cursor
+	} else {
+		next = ExtractBottomCursor(data)
+	}
 	it.page = Page{
 		Data:       data,
 		Number:     it.page.Number + 1,
 		Cursor:     it.cursor,
-		NextCursor: ExtractBottomCursor(data),
+		NextCursor: next,
 	}
 	return true
 }

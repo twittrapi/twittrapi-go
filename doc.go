@@ -20,7 +20,15 @@
 // # Responses
 //
 // Every method returns X's raw GraphQL JSON unchanged, as a [json.RawMessage]. Decode it
-// into your own structs or into a map. Typed models may be added in a later version.
+// into your own structs or into a map.
+//
+// The API also offers an opt-in simple format (format=simple): flat camelCase objects with a
+// fixed schema. Request it for every call with [WithFormat] or for one call with
+// [ContextWithFormat]. [FetchSimple], [FetchSimplePage] and [PaginateSimple] request it and
+// decode the result into typed values such as [SimpleTweet] and [SimpleUser]:
+//
+//	page, err := twittrapi.FetchSimplePage[twittrapi.SimpleTweet](ctx, client.Users.Tweets,
+//		twittrapi.UserTimelineParams{Username: "XDevelopers"})
 //
 // # Services
 //

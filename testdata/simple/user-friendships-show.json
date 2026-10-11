@@ -1,0 +1,18 @@
+{
+  "data": {
+    "source": {
+      "id": "2244994945",
+      "username": "XDevelopers"
+    },
+    "target": {
+      "id": "12",
+      "username": "jack"
+    },
+    "following": true,
+    "followedBy": false,
+    "canDm": true,
+    "blocking": null,
+    "blockedBy": null,
+    "muting": null
+  }
+}

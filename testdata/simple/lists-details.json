@@ -1,0 +1,16 @@
+{
+  "data": {
+    "id": "84839422",
+    "name": "Official Twitter Accounts",
+    "description": "Accounts managed by Twitter, Inc.",
+    "createdAt": "2013-02-05T18:14:21Z",
+    "memberCount": 81,
+    "followerCount": 989,
+    "private": false,
+    "bannerUrl": "https://pbs.twimg.com/media/GkIQyCGWYAA4UdW.png",
+    "owner": {
+      "id": "783214",
+      "username": "X"
+    }
+  }
+}

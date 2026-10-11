@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "id": "1720462559101268315",
+      "name": "Land Berlin, DE"
+    },
+    {
+      "id": "1720462559210320095",
+      "name": "Berlin, DE"
+    },
+    {
+      "id": "1721739239443038504",
+      "name": "New Berlin, WI"
+    }
+  ],
+  "nextCursor": null,
+  "previousCursor": null,
+  "hasNextPage": false
+}

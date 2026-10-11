@@ -90,6 +90,7 @@ client, err := twittrapi.NewClient(
 	twittrapi.WithTimeout(60*time.Second),          // per attempt, default 60s
 	twittrapi.WithMaxRetries(2),                    // for 429, 5xx, timeouts and network errors
 	twittrapi.WithRetryDelay(500*time.Millisecond), // base backoff delay
+	twittrapi.WithFormat(twittrapi.FormatSimple),   // response format, default FormatRaw
 )
 ```
 
@@ -195,6 +196,54 @@ fmt.Println(resp.Data.User.Result.RestID)
 ```
 
 The exact shape is X's and can change. Check a real response before relying on a field.
+
+### Simple format
+
+By default every method returns X's raw JSON. The API also has an opt-in
+[simple format](https://twittrapi.com/docs/simple-format): flat camelCase tweets, users, lists and
+communities with a fixed schema, in a `{"data", "nextCursor", "previousCursor", "hasNextPage"}`
+envelope. It is sent as `format=simple` and costs the same.
+
+Typed helpers request it for one call and decode the result:
+
+```go
+page, err := twittrapi.FetchSimplePage[twittrapi.SimpleTweet](ctx, client.Users.Tweets,
+	twittrapi.UserTimelineParams{Username: "XDevelopers", Count: 20})
+// handle err
+for _, t := range page.Data {
+	fmt.Println(t.ID, t.Author.Username, t.Counts.Likes, t.Text)
+}
+fmt.Println(page.HasNextPage, page.Next())
+
+user, err := twittrapi.FetchSimple[twittrapi.SimpleUser](ctx, client.Users.GetByUsername, "jack")
+// user is nil when the handle does not exist
+```
+
+`twittrapi.PaginateSimple` pages through a method in the simple format, following `nextCursor`
+until `hasNextPage` is false:
+
+```go
+it := twittrapi.PaginateSimple[twittrapi.SimpleUser](ctx, client.Users.Followers,
+	twittrapi.UserTimelineParams{Username: "jack", Count: 100}, nil)
+for it.Next() {
+	for _, u := range it.Page().Data {
+		fmt.Println(u.Username)
+	}
+}
+if err := it.Err(); err != nil {
+	log.Fatal(err)
+}
+```
+
+Types: `SimpleTweet`, `SimpleUser`, `SimpleUserAbout`, `SimpleList`, `SimpleCommunity`,
+`SimpleTrend`, `SimpleTrendLocation` and `SimplePage[T]`. A tweet X did not return is decoded
+with only `ID` and `Unavailable: true`.
+
+To get the simple format as `json.RawMessage` from every method, create the client with
+`twittrapi.WithFormat(twittrapi.FormatSimple)`, or set it for one call with
+`twittrapi.ContextWithFormat(ctx, twittrapi.FormatSimple)`. Decode such bodies with
+`twittrapi.DecodeSimple` / `twittrapi.DecodeSimplePage`. `Paginate` recognizes simple pages and
+follows `nextCursor` too.
 
 ### Endpoints not wrapped yet
 

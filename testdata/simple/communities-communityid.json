@@ -1,0 +1,57 @@
+{
+  "data": {
+    "id": "1762494276565426592",
+    "name": "AI — Rumors & Insights",
+    "description": "Discuss the state of AI from industry insiders and anons 🕵️‍♂️",
+    "createdAt": "2024-02-27T15:05:55Z",
+    "memberCount": 30718,
+    "moderatorCount": 0,
+    "joinPolicy": "Open",
+    "nsfw": false,
+    "topic": "Artificial Intelligence",
+    "bannerUrl": "https://pbs.twimg.com/community_banner_img/2006436936446029824/n1OK-QV1?format=jpg&name=orig",
+    "creator": null,
+    "rules": [
+      {
+        "id": "1985766359352164786",
+        "name": "Make relevant and useful posts 🙂",
+        "description": "Post useful, relevant, informative AI insights"
+      },
+      {
+        "id": "1984441743522079061",
+        "name": "Make sure content is High Quality 📈",
+        "description": "Post high quality, original content"
+      },
+      {
+        "id": "1984442424438010066",
+        "name": "Quote Posts must add useful info ⚠️",
+        "description": "Do not self-quote. Quote posts must add useful info."
+      },
+      {
+        "id": "2032384391582814534",
+        "name": "Do not post Spam 🗑️",
+        "description": "No spam, promo / ads, off-topic, hashtags"
+      },
+      {
+        "id": "1927813314681159868",
+        "name": "Check earlier posts 💬",
+        "description": "Don't post about same thing if others posts first."
+      },
+      {
+        "id": "1925092006776180987",
+        "name": "Source the insights 🔎",
+        "description": "Provide source directly in the main post!"
+      },
+      {
+        "id": "1954502399319560344",
+        "name": "Verify your information 🕵‍♂",
+        "description": "Do not vague post and verify your information before you post!"
+      },
+      {
+        "id": "2045586492832030865",
+        "name": "Don't share access methods 🤫",
+        "description": "Do not share working methods to access info on unreleased products / services in the scope of AI."
+      }
+    ]
+  }
+}

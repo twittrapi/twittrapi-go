@@ -1,0 +1,55 @@
+{
+  "data": [
+    {
+      "id": "1000000000000000001",
+      "username": "example_user_1",
+      "name": "Example User 1",
+      "description": "",
+      "location": "",
+      "url": null,
+      "createdAt": "2026-10-03T03:56:43Z",
+      "avatarUrl": "https://pbs.twimg.com/profile_images/1000000000000000000/example.jpg",
+      "bannerUrl": null,
+      "verified": false,
+      "verifiedType": null,
+      "protected": true,
+      "counts": {
+        "followers": 0,
+        "following": 38,
+        "tweets": 6,
+        "likes": 1,
+        "media": 1,
+        "listed": 0
+      },
+      "pinnedTweetIds": [],
+      "isAutomated": false
+    },
+    {
+      "id": "1000000000000000002",
+      "username": "example_user_2",
+      "name": "Example User 2",
+      "description": "",
+      "location": "",
+      "url": null,
+      "createdAt": "2026-09-29T10:32:31Z",
+      "avatarUrl": "https://pbs.twimg.com/profile_images/1000000000000000000/example.jpg",
+      "bannerUrl": null,
+      "verified": false,
+      "verifiedType": null,
+      "protected": false,
+      "counts": {
+        "followers": 0,
+        "following": 29,
+        "tweets": 0,
+        "likes": 0,
+        "media": 0,
+        "listed": 0
+      },
+      "pinnedTweetIds": [],
+      "isAutomated": false
+    }
+  ],
+  "nextCursor": "1000000000000000000|2109016363606474730",
+  "previousCursor": null,
+  "hasNextPage": true
+}

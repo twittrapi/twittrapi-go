@@ -80,6 +80,7 @@ type Client struct {
 	maxRetries int
 	retryDelay time.Duration
 	userAgent  string
+	format     Format
 
 	// sleep waits for d or until ctx is done. Replaced in tests.
 	sleep func(ctx context.Context, d time.Duration) error
@@ -97,6 +98,7 @@ type clientConfig struct {
 	maxRetries  int
 	retryDelay  time.Duration
 	userAgent   string
+	format      Format
 }
 
 // WithAPIKey sets a direct TwittrAPI key, sent in the X-API-KEY header to
@@ -224,6 +226,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		maxRetries: cfg.maxRetries,
 		retryDelay: cfg.retryDelay,
 		userAgent:  cfg.userAgent,
+		format:     normalizeFormat(cfg.format),
 		sleep:      sleepContext,
 	}
 	c.Users = &UsersService{client: c}
@@ -280,11 +283,14 @@ func (c *Client) buildURL(path string, query url.Values) string {
 // escaped) with the given query parameters and returns the raw JSON body. It applies the
 // same retries and error mapping as the service methods, so it can be used for endpoints
 // this package does not wrap yet. Empty query values are dropped.
+//
+// When the request uses the simple format (see [WithFormat] and [ContextWithFormat]),
+// format=simple is added to the query unless it already has a format parameter.
 func (c *Client) Get(ctx context.Context, path string, query url.Values) (json.RawMessage, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	target := c.buildURL(path, query)
+	target := c.buildURL(path, c.applyFormat(ctx, query))
 	for attempt := 0; ; attempt++ {
 		body, err := c.attempt(ctx, target)
 		if err == nil {

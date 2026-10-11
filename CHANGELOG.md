@@ -6,16 +6,30 @@ All notable changes to this module are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-11
+
+### Added
+
+- Opt-in simple response format (`format=simple`). `WithFormat(FormatSimple)` sets it for the
+  client, `ContextWithFormat` for one call. The default stays `FormatRaw`, which sends no
+  format parameter, so existing code gets the same requests and responses as before.
+- Typed simple-format models: `SimpleTweet`, `SimpleUser`, `SimpleUserAbout`, `SimpleList`,
+  `SimpleCommunity`, `SimpleTrend`, `SimpleTrendLocation` and the `SimplePage[T]` envelope
+  (`Data`, `NextCursor`, `PreviousCursor`, `HasNextPage`).
+- `FetchSimple` and `FetchSimplePage` call any service method in the simple format and decode
+  the result. `DecodeSimple` and `DecodeSimplePage` decode bodies you fetched yourself;
+  `ErrNotSimpleFormat` is returned for bodies that are not in the simple format.
+- `PaginateSimple` iterates typed simple pages, following `nextCursor` while `hasNextPage` is
+  true. `Paginate` also recognizes simple-format pages and stops when `hasNextPage` is false.
+- Tests against the API's simple-format fixtures in `testdata/simple`.
+- Table tests against trimmed real API responses in `testdata/live` for every paginated shape.
+
 ### Fixed
 
 - `Paginate` stops when a slice-shaped page (community search, community members, job search:
   `items_results` + `slice_info.next_cursor`) has no items, instead of following its cursor.
 - Examples: `extract.Tweets` uses the original full text for retweets (new `RetweetOf` field)
   and `extract.Users` also reads `{"result": User}` items (users by IDs, community members).
-
-### Added
-
-- Table tests against trimmed real API responses in `testdata/live` for every paginated shape.
 
 ## [0.1.0] - 2026-10-10
 
@@ -35,5 +49,6 @@ All notable changes to this module are listed here. The format follows
   `All` for range-over-func on Go 1.23+), plus `ExtractCursors` and `ExtractBottomCursor`.
 - Standard library only.
 
-[Unreleased]: https://github.com/twittrapi/twittrapi-go/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/twittrapi/twittrapi-go/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/twittrapi/twittrapi-go/releases/tag/v0.1.0

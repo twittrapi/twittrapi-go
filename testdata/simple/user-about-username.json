@@ -1,0 +1,37 @@
+{
+  "data": {
+    "id": "2244994945",
+    "username": "XDevelopers",
+    "name": "Developers",
+    "description": "",
+    "location": "",
+    "url": null,
+    "createdAt": "2013-12-14T04:35:55Z",
+    "avatarUrl": "https://pbs.twimg.com/profile_images/1683501992314798080/xl1POYLw.jpg",
+    "bannerUrl": null,
+    "verified": true,
+    "verifiedType": "Business",
+    "protected": false,
+    "counts": {
+      "followers": 0,
+      "following": 0,
+      "tweets": 0,
+      "likes": 0,
+      "media": 0,
+      "listed": 0
+    },
+    "pinnedTweetIds": [],
+    "isAutomated": false,
+    "about": {
+      "accountBasedIn": "United States",
+      "locationAccurate": true,
+      "createdCountryAccurate": true,
+      "source": "Web",
+      "usernameChanges": 1,
+      "lastUsernameChangeAt": "2023-07-26T01:33:12Z",
+      "affiliateUsername": "X",
+      "identityVerified": false,
+      "verifiedSince": "2014-03-21T18:15:00Z"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "data": [
+    {
+      "id": "1244731491088809984",
+      "username": "TwitterThailand",
+      "name": "Twitter Thailand",
+      "description": "Please follow @X for updates.",
+      "location": "",
+      "url": null,
+      "createdAt": "2020-03-30T21:02:29Z",
+      "avatarUrl": "https://pbs.twimg.com/profile_images/1354486384329854984/BXv7J1j2.jpg",
+      "bannerUrl": "https://pbs.twimg.com/profile_banners/1244731491088809984/1611791443",
+      "verified": false,
+      "verifiedType": null,
+      "protected": true,
+      "counts": {
+        "followers": 37828,
+        "following": 16,
+        "tweets": 1263,
+        "likes": 16,
+        "media": 333,
+        "listed": 39
+      },
+      "pinnedTweetIds": [
+        "1580793959307436032"
+      ],
+      "isAutomated": false
+    },
+    {
+      "id": "1168976680867762177",
+      "username": "TwitterAble",
+      "name": "Twitter Able",
+      "description": "Please follow @X for updates.",
+      "location": "",
+      "url": null,
+      "createdAt": "2019-09-03T19:59:02Z",
+      "avatarUrl": "https://pbs.twimg.com/profile_images/1580568780828250114/QNLIImWZ.jpg",
+      "bannerUrl": "https://pbs.twimg.com/profile_banners/1168976680867762177/1665671940",
+      "verified": false,
+      "verifiedType": null,
+      "protected": true,
+      "counts": {
+        "followers": 9423,
+        "following": 79,
+        "tweets": 226,
+        "likes": 504,
+        "media": 20,
+        "listed": 167
+      },
+      "pinnedTweetIds": [
+        "1580570198612250625"
+      ],
+      "isAutomated": false
+    }
+  ],
+  "nextCursor": "1000000000000000000|2109016359324090346",
+  "previousCursor": null,
+  "hasNextPage": true
+}

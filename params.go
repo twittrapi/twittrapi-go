@@ -9,7 +9,7 @@ import (
 
 // MaxUsersPerLookup is the maximum number of user IDs [UsersService.GetMany] accepts in one
 // call.
-const MaxUsersPerLookup = 100
+const MaxUsersPerLookup = 500
 
 // MaxCount is the largest page size accepted by paginated methods.
 const MaxCount = 100

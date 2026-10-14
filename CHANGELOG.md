@@ -6,7 +6,11 @@ All notable changes to this module are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-14
+
 ### Changed
+
+- `Users.GetMany` accepts up to 500 IDs per call (was 100), matching the API.
 
 - **Breaking:** `Tweets.Likers` now takes `LikersParams` (`TweetID`, `Cookie`, `Proxy`, `Count`,
   `Cursor`) and sends a POST to `/tweet/{id}/favorites` with cookie, proxy, count and cursor in
@@ -64,6 +68,7 @@ All notable changes to this module are listed here. The format follows
   `All` for range-over-func on Go 1.23+), plus `ExtractCursors` and `ExtractBottomCursor`.
 - Standard library only.
 
-[Unreleased]: https://github.com/twittrapi/twittrapi-go/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/twittrapi/twittrapi-go/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/twittrapi/twittrapi-go/releases/tag/v0.1.0

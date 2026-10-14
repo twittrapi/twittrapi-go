@@ -123,7 +123,7 @@ All examples below assume `ctx := context.Background()` and return `(json.RawMes
 client.Users.GetByUsername(ctx, "jack")
 client.Users.GetByID(ctx, "12")
 client.Users.UsernameToID(ctx, "jack")
-client.Users.GetMany(ctx, []string{"12", "13", "783214"}) // up to 100 IDs
+client.Users.GetMany(ctx, []string{"12", "13", "783214"}) // up to 500 IDs
 
 client.Users.Tweets(ctx, twittrapi.UserTimelineParams{Username: "jack", Count: 50})
 client.Users.TweetsAndReplies(ctx, twittrapi.UserTimelineParams{UserID: "12"})
@@ -348,7 +348,7 @@ HTTP errors are returned as pointer types. Check them with `errors.As`. All of t
 | `*TimeoutError`             | An attempt took longer than `WithTimeout`     |
 
 `*TimeoutError` also matches `*ConnectionError`. Invalid arguments caught before a request is
-sent (a non-numeric ID, more than 100 user IDs, a count over 100) wrap `twittrapi.ErrInvalidParams`.
+sent (a non-numeric ID, more than 500 user IDs, a count over 100) wrap `twittrapi.ErrInvalidParams`.
 When your context is canceled or its deadline passes, the context's error is returned.
 
 ```go

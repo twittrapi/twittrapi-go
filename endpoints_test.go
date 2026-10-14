@@ -181,7 +181,7 @@ func TestValidation(t *testing.T) {
 		{"non-numeric user ID", func(c *Client) (json.RawMessage, error) { return c.Users.GetByID(ctx, "jack") }, "numeric ID"},
 		{"empty username to ID", func(c *Client) (json.RawMessage, error) { return c.Users.UsernameToID(ctx, "") }, "username must not be empty"},
 		{"no IDs", func(c *Client) (json.RawMessage, error) { return c.Users.GetMany(ctx, nil) }, "at least one"},
-		{"101 IDs", func(c *Client) (json.RawMessage, error) { return c.Users.GetMany(ctx, many) }, "at most 100"},
+		{"501 IDs", func(c *Client) (json.RawMessage, error) { return c.Users.GetMany(ctx, many) }, "at most 500"},
 		{"bad ID in list", func(c *Client) (json.RawMessage, error) { return c.Users.GetMany(ctx, []string{"1", "x"}) }, "numeric ID"},
 		{"timeline without user", func(c *Client) (json.RawMessage, error) { return c.Users.Tweets(ctx, UserTimelineParams{}) }, "UserID or Username"},
 		{"timeline bad ID", func(c *Client) (json.RawMessage, error) {
@@ -241,7 +241,7 @@ func TestValidation(t *testing.T) {
 	}
 }
 
-func TestGetManyAcceptsExactly100(t *testing.T) {
+func TestGetManyAcceptsExactlyMax(t *testing.T) {
 	ids := make([]string, MaxUsersPerLookup)
 	for i := range ids {
 		ids[i] = fmt.Sprint(i + 1)
@@ -251,7 +251,7 @@ func TestGetManyAcceptsExactly100(t *testing.T) {
 	if _, err := c.Users.GetMany(context.Background(), ids); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Count(rec.last(t).URL.Query().Get("ids"), ",") + 1; got != 100 {
+	if got := strings.Count(rec.last(t).URL.Query().Get("ids"), ",") + 1; got != MaxUsersPerLookup {
 		t.Fatalf("sent %d IDs", got)
 	}
 }

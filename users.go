@@ -64,7 +64,7 @@ func (s *UsersService) UsernameToID(ctx context.Context, username string) (json.
 	return s.client.Get(ctx, "/username/to/id/"+url.PathEscape(name), nil)
 }
 
-// GetMany returns up to [MaxUsersPerLookup] (100) profiles in one call by numeric user ID.
+// GetMany returns up to [MaxUsersPerLookup] (500) profiles in one call by numeric user ID.
 func (s *UsersService) GetMany(ctx context.Context, userIDs []string) (json.RawMessage, error) {
 	if len(userIDs) == 0 {
 		return nil, invalidParams("userIDs must contain at least one ID")

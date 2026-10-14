@@ -11,7 +11,7 @@ import (
 )
 
 // ErrInvalidParams is wrapped by every error returned for invalid arguments that are caught
-// before a request is sent, such as a non-numeric ID or more than 100 user IDs. Check for it
+// before a request is sent, such as a non-numeric ID or more than 500 user IDs. Check for it
 // with errors.Is.
 var ErrInvalidParams = errors.New("invalid parameter")
 

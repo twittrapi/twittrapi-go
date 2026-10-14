@@ -6,3 +6,4 @@ coverage.txt
 # Output of the example programs
 *-followers.csv
 *-tweets.json
+!testdata/**

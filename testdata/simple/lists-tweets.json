@@ -1,0 +1,69 @@
+{
+  "data": [
+    {
+      "id": "2000000000000000001",
+      "url": "https://x.com/example_user_1/status/2000000000000000001",
+      "text": "Example text.",
+      "createdAt": "2026-10-10T15:36:16Z",
+      "lang": "en",
+      "author": {
+        "id": "1000000000000000001",
+        "username": "example_user_1",
+        "name": "Example User 1",
+        "description": "Example",
+        "location": "",
+        "url": null,
+        "createdAt": "2011-05-17T17:54:29Z",
+        "avatarUrl": "https://pbs.twimg.com/profile_images/1000000000000000000/example.jpg",
+        "bannerUrl": "https://pbs.twimg.com/profile_banners/1000000000000000000/1700000000",
+        "verified": true,
+        "verifiedType": "Business",
+        "protected": false,
+        "counts": {
+          "followers": 13830347,
+          "following": 2351,
+          "tweets": 33558,
+          "likes": 30446,
+          "media": 6619,
+          "listed": 8963
+        },
+        "pinnedTweetIds": [
+          "2092752406081634501"
+        ],
+        "isAutomated": false
+      },
+      "counts": {
+        "likes": 22,
+        "retweets": 6,
+        "replies": 4,
+        "quotes": 1,
+        "bookmarks": 1,
+        "views": 7500
+      },
+      "media": [
+        {
+          "type": "photo",
+          "url": "https://pbs.twimg.com/media/EXAMPLE.jpg",
+          "previewUrl": "https://pbs.twimg.com/media/EXAMPLE.jpg",
+          "width": 982,
+          "height": 1228,
+          "altText": null,
+          "durationMs": null
+        }
+      ],
+      "urls": [],
+      "hashtags": [],
+      "mentions": [],
+      "replyTo": null,
+      "quoted": null,
+      "retweetOf": null,
+      "conversationId": "2000000000000000001",
+      "isPinned": false,
+      "source": null,
+      "article": null
+    }
+  ],
+  "nextCursor": "DAABCgABHUS7Mid__58KAAIdQPHo7lqQcQgAAwAAAAIAAA",
+  "previousCursor": "DAABCgABHUS7MieAJxEKAAIdRI-M3ZvQJQgAAwAAAAEAAA",
+  "hasNextPage": true
+}

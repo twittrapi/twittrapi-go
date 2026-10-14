@@ -123,7 +123,7 @@ func TestLivePaginateShapes(t *testing.T) {
 			return Paginate(ctx, c.Users.Tweets, UserTimelineParams{UserID: "2244994945"}, &PaginateOptions{MaxPages: NoPageLimit})
 		}, []string{""}},
 		{"empty favorites timeline", map[string]string{"": liveFixture(t, "tweet-tweetid-favorites")}, func(c *Client) *PageIterator {
-			return Paginate(ctx, c.Tweets.Likers, TweetPageParams{TweetID: "2019881223666233717"}, &PaginateOptions{MaxPages: NoPageLimit})
+			return Paginate(ctx, c.Tweets.Likers, LikersParams{TweetID: "2019881223666233717", Cookie: "auth_token=a; ct0=b", Proxy: "http://u:p@h:1"}, &PaginateOptions{MaxPages: NoPageLimit})
 		}, []string{""}},
 		{"articles", map[string]string{"": liveFixture(t, "user-userid-articles")}, func(c *Client) *PageIterator {
 			return Paginate(ctx, c.Users.Tweets, UserTimelineParams{UserID: "2244994945"}, &PaginateOptions{MaxPages: 1})

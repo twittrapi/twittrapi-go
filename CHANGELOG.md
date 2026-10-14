@@ -6,6 +6,21 @@ All notable changes to this module are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `Tweets.Likers` now takes `LikersParams` (`TweetID`, `Cookie`, `Proxy`, `Count`,
+  `Cursor`) and sends a POST to `/tweet/{id}/favorites` with cookie, proxy, count and cursor in
+  a JSON body. The API no longer accepts GET for this endpoint. It works only for your own
+  tweets: X shows who liked a tweet only to its author, so `Cookie` must be the Cookie header
+  (with `auth_token` and `ct0`) of the account that posted it. `Proxy` is
+  `http://user:pass@host:port`. An empty `Cookie` or `Proxy` returns `ErrInvalidParams`
+  without sending a request.
+
+### Added
+
+- `Client.Post` sends an authenticated POST with a JSON body, with the same retries, error
+  handling and simple-format support as `Client.Get`.
+
 ## [0.2.0] - 2026-10-11
 
 ### Added

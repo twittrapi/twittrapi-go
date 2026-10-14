@@ -1,6 +1,7 @@
 package twittrapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -287,12 +288,27 @@ func (c *Client) buildURL(path string, query url.Values) string {
 // When the request uses the simple format (see [WithFormat] and [ContextWithFormat]),
 // format=simple is added to the query unless it already has a format parameter.
 func (c *Client) Get(ctx context.Context, path string, query url.Values) (json.RawMessage, error) {
+	return c.do(ctx, http.MethodGet, path, query, nil)
+}
+
+// Post sends an authenticated POST request to path (relative to the base URL, already
+// escaped) with the given query parameters and body encoded as JSON, and returns the raw
+// JSON body. Retries, error mapping and the simple format work as in [Client.Get].
+func (c *Client) Post(ctx context.Context, path string, query url.Values, body any) (json.RawMessage, error) {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("twittrapi: encoding request body: %w", err)
+	}
+	return c.do(ctx, http.MethodPost, path, query, payload)
+}
+
+func (c *Client) do(ctx context.Context, method, path string, query url.Values, payload []byte) (json.RawMessage, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	target := c.buildURL(path, c.applyFormat(ctx, query))
 	for attempt := 0; ; attempt++ {
-		body, err := c.attempt(ctx, target)
+		body, err := c.attempt(ctx, method, target, payload)
 		if err == nil {
 			return body, nil
 		}
@@ -350,18 +366,25 @@ func sleepContext(ctx context.Context, d time.Duration) error {
 	}
 }
 
-func (c *Client) attempt(ctx context.Context, target string) (json.RawMessage, error) {
+func (c *Client) attempt(ctx context.Context, method, target string, payload []byte) (json.RawMessage, error) {
 	attemptCtx := ctx
 	if c.timeout > 0 {
 		var cancel context.CancelFunc
 		attemptCtx, cancel = context.WithTimeout(ctx, c.timeout)
 		defer cancel()
 	}
-	req, err := http.NewRequestWithContext(attemptCtx, http.MethodGet, target, nil)
+	var reqBody io.Reader
+	if payload != nil {
+		reqBody = bytes.NewReader(payload)
+	}
+	req, err := http.NewRequestWithContext(attemptCtx, method, target, reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("twittrapi: building request: %w", err)
 	}
 	c.setHeaders(req.Header)
+	if payload != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

@@ -44,7 +44,7 @@ func (p TweetParams) WithCursor(cursor string) TweetParams {
 	return p
 }
 
-// TweetPageParams selects a tweet and a page for retweeters, likers and quotes.
+// TweetPageParams selects a tweet and a page for retweeters and quotes.
 type TweetPageParams struct {
 	// TweetID is the numeric tweet ID. Required.
 	TweetID string
@@ -59,6 +59,31 @@ func (p TweetPageParams) PageCursor() string { return p.Cursor }
 
 // WithCursor returns a copy of p with Cursor set. It implements [Pageable].
 func (p TweetPageParams) WithCursor(cursor string) TweetPageParams {
+	p.Cursor = cursor
+	return p
+}
+
+// LikersParams selects one of your own tweets and a page for [TweetsService.Likers].
+type LikersParams struct {
+	// TweetID is the numeric tweet ID. Required.
+	TweetID string
+	// Cookie is the Cookie header of the X account that posted the tweet. It must contain
+	// auth_token and ct0. Required.
+	Cookie string
+	// Proxy is the proxy the request to X goes out through, as http://user:pass@host:port.
+	// Required.
+	Proxy string
+	// Count is the page size, from 1 to 100. 0 uses the API default (20).
+	Count int
+	// Cursor requests a specific page. Leave empty for the first page.
+	Cursor string
+}
+
+// PageCursor returns p.Cursor. It implements [Pageable].
+func (p LikersParams) PageCursor() string { return p.Cursor }
+
+// WithCursor returns a copy of p with Cursor set. It implements [Pageable].
+func (p LikersParams) WithCursor(cursor string) LikersParams {
 	p.Cursor = cursor
 	return p
 }
@@ -82,10 +107,35 @@ func (s *TweetsService) Retweeters(ctx context.Context, p TweetPageParams) (json
 	return s.list(ctx, "retweets", p)
 }
 
-// Likers returns users who liked a tweet. X hides likers for many tweets, so the result can
-// be empty. Paginated.
-func (s *TweetsService) Likers(ctx context.Context, p TweetPageParams) (json.RawMessage, error) {
-	return s.list(ctx, "favorites", p)
+// Likers returns users who liked a tweet. It works only for your own tweets: X shows who
+// liked a tweet only to its author, so p.Cookie must belong to the account that posted it.
+// For anyone else's tweet the list is empty. The request is a POST; cookie, proxy, count
+// and cursor go in the JSON body. Paginated.
+func (s *TweetsService) Likers(ctx context.Context, p LikersParams) (json.RawMessage, error) {
+	id, err := numericID("TweetID", p.TweetID)
+	if err != nil {
+		return nil, err
+	}
+	cookie, err := nonEmpty("Cookie", p.Cookie)
+	if err != nil {
+		return nil, err
+	}
+	proxy, err := nonEmpty("Proxy", p.Proxy)
+	if err != nil {
+		return nil, err
+	}
+	if err := validCount(p.Count); err != nil {
+		return nil, err
+	}
+	body := likersBody{Cookie: cookie, Proxy: proxy, Count: p.Count, Cursor: p.Cursor}
+	return s.client.Post(ctx, "/tweet/"+id+"/favorites", nil, body)
+}
+
+type likersBody struct {
+	Cookie string `json:"cookie"`
+	Proxy  string `json:"proxy"`
+	Count  int    `json:"count,omitempty"`
+	Cursor string `json:"cursor,omitempty"`
 }
 
 // Quotes returns tweets quoting a tweet. Paginated.

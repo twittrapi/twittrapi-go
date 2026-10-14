@@ -139,8 +139,15 @@ client.Users.VerifiedFollowers(ctx, twittrapi.UserTimelineParams{UserID: "12"})
 client.Tweets.Get(ctx, twittrapi.TweetParams{TweetID: "20"}) // tweet plus reply thread
 client.Tweets.Get(ctx, twittrapi.TweetParams{TweetID: "20", RankingMode: twittrapi.RankingRecency}) // Relevance | Recency | Likes
 client.Tweets.Retweeters(ctx, twittrapi.TweetPageParams{TweetID: "20"})
-client.Tweets.Likers(ctx, twittrapi.TweetPageParams{TweetID: "20"}) // X hides likers for many tweets; may be empty
 client.Tweets.Quotes(ctx, twittrapi.TweetPageParams{TweetID: "20"})
+
+// Likers works only for your own tweets: X shows who liked a tweet only to its author.
+// Pass the Cookie header of the account that posted it (with auth_token and ct0) and a proxy.
+client.Tweets.Likers(ctx, twittrapi.LikersParams{
+	TweetID: "20",
+	Cookie:  "auth_token=...; ct0=...",
+	Proxy:   "http://user:pass@host:port",
+})
 ```
 
 ### Search
@@ -254,10 +261,12 @@ follows `nextCursor` too.
 
 ### Endpoints not wrapped yet
 
-`client.Get` sends an authenticated GET with the same retries and error handling:
+`client.Get` sends an authenticated GET with the same retries and error handling, `client.Post`
+a POST with a JSON body:
 
 ```go
 data, err := client.Get(ctx, "/some/endpoint", url.Values{"foo": {"bar"}})
+data, err = client.Post(ctx, "/some/endpoint", nil, map[string]any{"foo": "bar"})
 ```
 
 ## Pagination

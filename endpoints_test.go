@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
@@ -69,7 +71,7 @@ func endpointCases() []endpointCase {
 			return c.Tweets.Retweeters(ctx, TweetPageParams{TweetID: "20", Count: 10})
 		}, "/tweet/20/retweets", url.Values{"count": {"10"}}},
 		{"Tweets.Likers", func(c *Client) (json.RawMessage, error) {
-			return c.Tweets.Likers(ctx, TweetPageParams{TweetID: "20"})
+			return c.Tweets.Likers(ctx, LikersParams{TweetID: "20", Cookie: "auth_token=a; ct0=b", Proxy: "http://u:p@h:1"})
 		}, "/tweet/20/favorites", url.Values{}},
 		{"Tweets.Quotes", func(c *Client) (json.RawMessage, error) {
 			return c.Tweets.Quotes(ctx, TweetPageParams{TweetID: "20", Cursor: "q"})
@@ -195,7 +197,16 @@ func TestValidation(t *testing.T) {
 		{"bad ranking mode", func(c *Client) (json.RawMessage, error) {
 			return c.Tweets.Get(ctx, TweetParams{TweetID: "20", RankingMode: "Newest"})
 		}, "RankingMode must be one of"},
-		{"bad tweet ID for likers", func(c *Client) (json.RawMessage, error) { return c.Tweets.Likers(ctx, TweetPageParams{}) }, "numeric ID"},
+		{"bad tweet ID for likers", func(c *Client) (json.RawMessage, error) { return c.Tweets.Likers(ctx, LikersParams{}) }, "numeric ID"},
+		{"likers without cookie", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Likers(ctx, LikersParams{TweetID: "20", Proxy: "http://u:p@h:1"})
+		}, "Cookie must be"},
+		{"likers without proxy", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Likers(ctx, LikersParams{TweetID: "20", Cookie: "auth_token=a; ct0=b", Proxy: " "})
+		}, "Proxy must be"},
+		{"likers count too high", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Likers(ctx, LikersParams{TweetID: "20", Cookie: "auth_token=a; ct0=b", Proxy: "http://u:p@h:1", Count: 101})
+		}, "count must be"},
 		{"empty search", func(c *Client) (json.RawMessage, error) { return c.Search.Tweets(ctx, SearchParams{Query: "  "}) }, "Query must be"},
 		{"bad category", func(c *Client) (json.RawMessage, error) {
 			return c.Search.Tweets(ctx, SearchParams{Query: "x", Category: "latest"})
@@ -242,5 +253,66 @@ func TestGetManyAcceptsExactly100(t *testing.T) {
 	}
 	if got := strings.Count(rec.last(t).URL.Query().Get("ids"), ",") + 1; got != 100 {
 		t.Fatalf("sent %d IDs", got)
+	}
+}
+
+func TestLikersPost(t *testing.T) {
+	var method, contentType, format string
+	var body map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		method, contentType, format = r.Method, r.Header.Get("Content-Type"), r.URL.Query().Get("format")
+		body = nil
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("decode body: %v", err)
+		}
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	t.Cleanup(srv.Close)
+	c, _ := newTestClient(t, srv)
+	ctx := context.Background()
+
+	_, err := c.Tweets.Likers(ctx, LikersParams{TweetID: " 20 ", Cookie: " auth_token=a; ct0=b ", Proxy: "http://u:p@h:1", Count: 50, Cursor: "c1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if method != http.MethodPost || contentType != "application/json" || format != "" {
+		t.Fatalf("method=%s content-type=%q format=%q", method, contentType, format)
+	}
+	want := map[string]any{"cookie": "auth_token=a; ct0=b", "proxy": "http://u:p@h:1", "count": float64(50), "cursor": "c1"}
+	if !reflect.DeepEqual(body, want) {
+		t.Fatalf("body = %v, want %v", body, want)
+	}
+
+	_, err = c.Tweets.Likers(ContextWithFormat(ctx, FormatSimple), LikersParams{TweetID: "20", Cookie: "auth_token=a; ct0=b", Proxy: "http://u:p@h:1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if format != "simple" {
+		t.Fatalf("format = %q, want simple", format)
+	}
+	want = map[string]any{"cookie": "auth_token=a; ct0=b", "proxy": "http://u:p@h:1"}
+	if !reflect.DeepEqual(body, want) {
+		t.Fatalf("body = %v, want %v", body, want)
+	}
+}
+
+func TestPaginateLikersSendsCursorInBody(t *testing.T) {
+	pages := [][]byte{simpleFixture(t, "user-userid-followers"), simpleFixture(t, "tweet-tweetid-favorites")}
+	var cursors []any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		cursors = append(cursors, body["cursor"])
+		_, _ = w.Write(pages[min(len(cursors), len(pages))-1])
+	}))
+	t.Cleanup(srv.Close)
+	c, _ := newTestClient(t, srv, WithFormat(FormatSimple))
+	it := Paginate(context.Background(), c.Tweets.Likers, LikersParams{TweetID: "20", Cookie: "auth_token=a; ct0=b", Proxy: "http://u:p@h:1"}, nil)
+	var nexts []string
+	for it.Next() {
+		nexts = append(nexts, it.Page().NextCursor)
+	}
+	if it.Err() != nil || len(cursors) != 2 || cursors[0] != nil || cursors[1] != nexts[0] {
+		t.Fatalf("cursors=%v nexts=%v err=%v", cursors, nexts, it.Err())
 	}
 }

@@ -53,13 +53,21 @@ func oneOf(name, value string, allowed []string) (string, error) {
 	return "", invalidParams("%s must be one of %s, got %q", name, strings.Join(allowed, ", "), value)
 }
 
+// validCount checks a page size: 0 (the API default) or 1 to MaxCount.
+func validCount(count int) error {
+	if count != 0 && (count < 1 || count > MaxCount) {
+		return invalidParams("count must be an integer from 1 to %d, got %d", MaxCount, count)
+	}
+	return nil
+}
+
 // pageQuery validates count and returns the count and cursor query parameters.
 func pageQuery(count int, cursor string) (url.Values, error) {
+	if err := validCount(count); err != nil {
+		return nil, err
+	}
 	q := url.Values{}
 	if count != 0 {
-		if count < 1 || count > MaxCount {
-			return nil, invalidParams("count must be an integer from 1 to %d, got %d", MaxCount, count)
-		}
 		q.Set("count", strconv.Itoa(count))
 	}
 	if cursor != "" {

@@ -19,9 +19,10 @@ import (
 const (
 	// DefaultBaseURL is the base URL of the direct TwittrAPI API.
 	DefaultBaseURL = "https://api.twittrapi.com"
-	// RapidAPIHost is the host of TwittrAPI on RapidAPI, sent as x-rapidapi-host.
+	// RapidAPIHost is the default host of TwittrAPI on RapidAPI, sent as x-rapidapi-host.
+	// Use [WithRapidAPIHost] or RAPIDAPI_HOST for another RapidAPI listing.
 	RapidAPIHost = "twitter-aio.p.rapidapi.com"
-	// RapidAPIBaseURL is the base URL used with a RapidAPI key.
+	// RapidAPIBaseURL is the default base URL used with a RapidAPI key.
 	RapidAPIBaseURL = "https://" + RapidAPIHost
 	// DefaultTimeout is the default timeout for a single attempt of a request.
 	DefaultTimeout = 60 * time.Second
@@ -35,6 +36,8 @@ const (
 	EnvAPIKey = "TWITTRAPI_API_KEY"
 	// EnvRapidAPIKey is the environment variable read for a RapidAPI key.
 	EnvRapidAPIKey = "RAPIDAPI_KEY"
+	// EnvRapidAPIHost is the environment variable read for the RapidAPI host.
+	EnvRapidAPIHost = "RAPIDAPI_HOST"
 	// EnvBaseURL is the environment variable read for a base URL override in direct mode.
 	EnvBaseURL = "TWITTRAPI_BASE_URL"
 
@@ -73,15 +76,16 @@ type Client struct {
 	// Trends groups trending topic endpoints.
 	Trends *TrendsService
 
-	authMode   AuthMode
-	apiKey     string
-	baseURL    string
-	httpClient *http.Client
-	timeout    time.Duration
-	maxRetries int
-	retryDelay time.Duration
-	userAgent  string
-	format     Format
+	authMode     AuthMode
+	apiKey       string
+	rapidAPIHost string
+	baseURL      string
+	httpClient   *http.Client
+	timeout      time.Duration
+	maxRetries   int
+	retryDelay   time.Duration
+	userAgent    string
+	format       Format
 
 	// sleep waits for d or until ctx is done. Replaced in tests.
 	sleep func(ctx context.Context, d time.Duration) error
@@ -91,15 +95,16 @@ type Client struct {
 type Option func(*clientConfig)
 
 type clientConfig struct {
-	apiKey      string
-	rapidAPIKey string
-	baseURL     string
-	httpClient  *http.Client
-	timeout     time.Duration
-	maxRetries  int
-	retryDelay  time.Duration
-	userAgent   string
-	format      Format
+	apiKey       string
+	rapidAPIKey  string
+	rapidAPIHost string
+	baseURL      string
+	httpClient   *http.Client
+	timeout      time.Duration
+	maxRetries   int
+	retryDelay   time.Duration
+	userAgent    string
+	format       Format
 }
 
 // WithAPIKey sets a direct TwittrAPI key, sent in the X-API-KEY header to
@@ -114,8 +119,18 @@ func WithRapidAPIKey(key string) Option {
 	return func(c *clientConfig) { c.rapidAPIKey = strings.TrimSpace(key) }
 }
 
+// WithRapidAPIHost sets the RapidAPI host for a key from another TwittrAPI listing on
+// RapidAPI, such as "twttr.p.rapidapi.com". A scheme and a trailing slash are removed. The
+// host is sent as x-rapidapi-host and requests go to https://<host>, unless [WithBaseURL]
+// is set. Without it the client uses RAPIDAPI_HOST, if set, and then [RapidAPIHost]. It
+// has no effect in direct mode.
+func WithRapidAPIHost(host string) Option {
+	return func(c *clientConfig) { c.rapidAPIHost = strings.TrimSpace(host) }
+}
+
 // WithBaseURL overrides the API base URL. Without it the client uses [DefaultBaseURL] in
-// direct mode (or TWITTRAPI_BASE_URL, if set) and [RapidAPIBaseURL] in RapidAPI mode.
+// direct mode (or TWITTRAPI_BASE_URL, if set) and https://<host> in RapidAPI mode, where
+// host is set by [WithRapidAPIHost] (default [RapidAPIHost]).
 func WithBaseURL(baseURL string) Option {
 	return func(c *clientConfig) { c.baseURL = strings.TrimSpace(baseURL) }
 }
@@ -155,12 +170,35 @@ func WithUserAgent(ua string) Option {
 
 func envValue(name string) string { return strings.TrimSpace(os.Getenv(name)) }
 
+// normalizeRapidAPIHost turns "twttr.p.rapidapi.com", "https://twttr.p.rapidapi.com" or
+// "https://twttr.p.rapidapi.com/" into "twttr.p.rapidapi.com". It rejects values with a
+// path, query, spaces or user info.
+func normalizeRapidAPIHost(raw string) (string, error) {
+	host := strings.TrimSpace(raw)
+	lower := strings.ToLower(host)
+	for _, scheme := range []string{"https://", "http://"} {
+		if strings.HasPrefix(lower, scheme) {
+			host = host[len(scheme):]
+			break
+		}
+	}
+	host = strings.TrimSuffix(host, "/")
+	if host == "" || strings.ContainsAny(host, "/?#@ \t\r\n") {
+		return "", fmt.Errorf("twittrapi: invalid RapidAPI host %q", raw)
+	}
+	if u, err := url.Parse("https://" + host); err != nil || u.Host != host {
+		return "", fmt.Errorf("twittrapi: invalid RapidAPI host %q", raw)
+	}
+	return host, nil
+}
+
 // NewClient returns a new client configured by opts.
 //
 // The API key is taken from, in order: [WithAPIKey], [WithRapidAPIKey], the
 // TWITTRAPI_API_KEY environment variable and the RAPIDAPI_KEY environment variable. Passing
 // both WithAPIKey and WithRapidAPIKey is an error. When no key is found, NewClient returns
-// [ErrNoAPIKey].
+// [ErrNoAPIKey]. In RapidAPI mode the host comes from [WithRapidAPIHost], then the
+// RAPIDAPI_HOST environment variable, then [RapidAPIHost]; an invalid host is an error.
 func NewClient(opts ...Option) (*Client, error) {
 	cfg := clientConfig{
 		timeout:    DefaultTimeout,
@@ -191,13 +229,28 @@ func NewClient(opts ...Option) (*Client, error) {
 		return nil, ErrNoAPIKey
 	}
 
+	var rapidAPIHost string
+	if mode == AuthRapidAPI {
+		rapidAPIHost = cfg.rapidAPIHost
+		if rapidAPIHost == "" {
+			rapidAPIHost = envValue(EnvRapidAPIHost)
+		}
+		if rapidAPIHost == "" {
+			rapidAPIHost = RapidAPIHost
+		}
+		var err error
+		if rapidAPIHost, err = normalizeRapidAPIHost(rapidAPIHost); err != nil {
+			return nil, err
+		}
+	}
+
 	baseURL := cfg.baseURL
 	if baseURL == "" && mode == AuthDirect {
 		baseURL = envValue(EnvBaseURL)
 	}
 	if baseURL == "" {
 		if mode == AuthRapidAPI {
-			baseURL = RapidAPIBaseURL
+			baseURL = "https://" + rapidAPIHost
 		} else {
 			baseURL = DefaultBaseURL
 		}
@@ -219,16 +272,17 @@ func NewClient(opts ...Option) (*Client, error) {
 	}
 
 	c := &Client{
-		authMode:   mode,
-		apiKey:     key,
-		baseURL:    baseURL,
-		httpClient: hc,
-		timeout:    cfg.timeout,
-		maxRetries: cfg.maxRetries,
-		retryDelay: cfg.retryDelay,
-		userAgent:  cfg.userAgent,
-		format:     normalizeFormat(cfg.format),
-		sleep:      sleepContext,
+		authMode:     mode,
+		apiKey:       key,
+		rapidAPIHost: rapidAPIHost,
+		baseURL:      baseURL,
+		httpClient:   hc,
+		timeout:      cfg.timeout,
+		maxRetries:   cfg.maxRetries,
+		retryDelay:   cfg.retryDelay,
+		userAgent:    cfg.userAgent,
+		format:       normalizeFormat(cfg.format),
+		sleep:        sleepContext,
 	}
 	c.Users = &UsersService{client: c}
 	c.Tweets = &TweetsService{client: c}
@@ -245,6 +299,10 @@ func (c *Client) AuthMode() AuthMode { return c.authMode }
 // BaseURL returns the base URL requests are sent to, without a trailing slash.
 func (c *Client) BaseURL() string { return c.baseURL }
 
+// RapidAPIHost returns the host sent as x-rapidapi-host in RapidAPI mode, or "" in direct
+// mode.
+func (c *Client) RapidAPIHost() string { return c.rapidAPIHost }
+
 // MaxRetries returns the number of retries configured for this client.
 func (c *Client) MaxRetries() int { return c.maxRetries }
 
@@ -253,7 +311,7 @@ func (c *Client) setHeaders(h http.Header) {
 	h.Set("User-Agent", c.userAgent)
 	if c.authMode == AuthRapidAPI {
 		h.Set("x-rapidapi-key", c.apiKey)
-		h.Set("x-rapidapi-host", RapidAPIHost)
+		h.Set("x-rapidapi-host", c.rapidAPIHost)
 	} else {
 		h.Set("X-API-KEY", c.apiKey)
 	}

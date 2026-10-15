@@ -17,6 +17,7 @@ func clearEnv(t *testing.T) {
 	t.Helper()
 	t.Setenv(EnvAPIKey, "")
 	t.Setenv(EnvRapidAPIKey, "")
+	t.Setenv(EnvRapidAPIHost, "")
 	t.Setenv(EnvBaseURL, "")
 }
 
@@ -223,6 +224,115 @@ func TestRapidAPIModeRequest(t *testing.T) {
 	}
 	if r.Header.Get("X-API-KEY") != "" {
 		t.Fatal("X-API-KEY sent in RapidAPI mode")
+	}
+}
+
+func TestRapidAPIHost(t *testing.T) {
+	clearEnv(t)
+	c, err := NewClient(WithRapidAPIKey("rk"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.RapidAPIHost() != RapidAPIHost {
+		t.Fatalf("default host = %q", c.RapidAPIHost())
+	}
+
+	for _, in := range []string{
+		"twttr.p.rapidapi.com",
+		"https://twttr.p.rapidapi.com",
+		"https://twttr.p.rapidapi.com/",
+		"  HTTPS://twttr.p.rapidapi.com/ ",
+		"http://twttr.p.rapidapi.com",
+	} {
+		c, err := NewClient(WithRapidAPIKey("rk"), WithRapidAPIHost(in))
+		if err != nil {
+			t.Fatalf("%q: %v", in, err)
+		}
+		if c.RapidAPIHost() != "twttr.p.rapidapi.com" || c.BaseURL() != "https://twttr.p.rapidapi.com" {
+			t.Fatalf("%q: host=%q base=%s", in, c.RapidAPIHost(), c.BaseURL())
+		}
+	}
+
+	for _, in := range []string{
+		"twttr.p.rapidapi.com/v1",
+		"https://twttr.p.rapidapi.com/v1/",
+		"twttr p.rapidapi.com",
+		"https://",
+		"user@twttr.p.rapidapi.com",
+		"twttr.p.rapidapi.com?x=1",
+	} {
+		if _, err := NewClient(WithRapidAPIKey("rk"), WithRapidAPIHost(in)); err == nil {
+			t.Fatalf("%q: want error", in)
+		}
+	}
+}
+
+func TestRapidAPIHostEnv(t *testing.T) {
+	clearEnv(t)
+	t.Setenv(EnvRapidAPIKey, "rk")
+	t.Setenv(EnvRapidAPIHost, "https://twttr.p.rapidapi.com/")
+	c, err := NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.RapidAPIHost() != "twttr.p.rapidapi.com" || c.BaseURL() != "https://twttr.p.rapidapi.com" {
+		t.Fatalf("host=%q base=%s", c.RapidAPIHost(), c.BaseURL())
+	}
+
+	// The option wins over the environment.
+	c, err = NewClient(WithRapidAPIHost("other.p.rapidapi.com"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.RapidAPIHost() != "other.p.rapidapi.com" {
+		t.Fatalf("host = %q", c.RapidAPIHost())
+	}
+
+	t.Setenv(EnvRapidAPIHost, "twttr.p.rapidapi.com/path")
+	if _, err := NewClient(); err == nil {
+		t.Fatal("want error for invalid RAPIDAPI_HOST")
+	}
+}
+
+func TestRapidAPIHostWithBaseURL(t *testing.T) {
+	srv, rec := newServer(t)
+	clearEnv(t)
+	c, err := NewClient(WithRapidAPIKey("rk"), WithRapidAPIHost("twttr.p.rapidapi.com"), WithBaseURL(srv.URL))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.BaseURL() != srv.URL {
+		t.Fatalf("base = %s", c.BaseURL())
+	}
+	if _, err := c.Users.GetByID(context.Background(), "12"); err != nil {
+		t.Fatal(err)
+	}
+	if got := rec.last(t).Header.Get("x-rapidapi-host"); got != "twttr.p.rapidapi.com" {
+		t.Fatalf("x-rapidapi-host = %q", got)
+	}
+}
+
+func TestRapidAPIHostIgnoredInDirectMode(t *testing.T) {
+	srv, rec := newServer(t)
+	clearEnv(t)
+	t.Setenv(EnvRapidAPIHost, "not a host/")
+	c, err := NewClient(WithAPIKey("dk"), WithRapidAPIHost("twttr.p.rapidapi.com"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.BaseURL() != DefaultBaseURL || c.RapidAPIHost() != "" {
+		t.Fatalf("base=%s host=%q", c.BaseURL(), c.RapidAPIHost())
+	}
+
+	c, err = NewClient(WithAPIKey("dk"), WithRapidAPIHost("twttr.p.rapidapi.com"), WithBaseURL(srv.URL))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Users.GetByID(context.Background(), "12"); err != nil {
+		t.Fatal(err)
+	}
+	if got := rec.last(t).Header.Get("x-rapidapi-host"); got != "" {
+		t.Fatalf("x-rapidapi-host = %q in direct mode", got)
 	}
 }
 

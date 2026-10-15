@@ -6,6 +6,14 @@ All notable changes to this module are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `WithRapidAPIHost` and the `RAPIDAPI_HOST` environment variable set the RapidAPI host for
+  keys from another TwittrAPI listing on RapidAPI. The host is sent as `x-rapidapi-host` and
+  requests go to `https://<host>` unless `WithBaseURL` is set. `https://` and a trailing slash
+  are accepted; an invalid host makes `NewClient` return an error. The default stays
+  `twitter-aio.p.rapidapi.com`. `Client.RapidAPIHost` returns the host in use.
+
 ## [0.3.0] - 2026-10-14
 
 ### Changed

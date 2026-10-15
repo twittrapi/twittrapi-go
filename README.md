@@ -75,6 +75,9 @@ client, err := twittrapi.NewClient(twittrapi.WithRapidAPIKey(os.Getenv("RAPIDAPI
 
 Requests go to `https://twitter-aio.p.rapidapi.com` with `x-rapidapi-key` and `x-rapidapi-host`.
 
+Subscribed to another TwittrAPI listing on RapidAPI? Set its host with
+`twittrapi.WithRapidAPIHost("twttr.p.rapidapi.com")` or the `RAPIDAPI_HOST` environment variable.
+
 ### Keys from the environment
 
 With no key option, the client reads `TWITTRAPI_API_KEY`, then `RAPIDAPI_KEY`:
@@ -92,6 +95,7 @@ If both environment variables are set, the direct key is used. Passing both `Wit
 client, err := twittrapi.NewClient(
 	twittrapi.WithAPIKey("..."),                    // direct API key (or TWITTRAPI_API_KEY)
 	twittrapi.WithRapidAPIKey("..."),               // RapidAPI key (or RAPIDAPI_KEY)
+	twittrapi.WithRapidAPIHost("..."),              // RapidAPI host (or RAPIDAPI_HOST), default twitter-aio.p.rapidapi.com
 	twittrapi.WithBaseURL("..."),                   // override the base URL (direct mode also reads TWITTRAPI_BASE_URL)
 	twittrapi.WithHTTPClient(&http.Client{}),       // your own *http.Client (proxies, transports)
 	twittrapi.WithTimeout(60*time.Second),          // per attempt, default 60s

@@ -38,6 +38,18 @@ func ExampleNewClient_rapidAPI() {
 	fmt.Println(client.AuthMode(), client.BaseURL())
 }
 
+func ExampleWithRapidAPIHost() {
+	// A key from another TwittrAPI listing on RapidAPI. RAPIDAPI_HOST works too.
+	client, err := twittrapi.NewClient(
+		twittrapi.WithRapidAPIKey(os.Getenv("RAPIDAPI_KEY")),
+		twittrapi.WithRapidAPIHost("twttr.p.rapidapi.com"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(client.RapidAPIHost(), client.BaseURL())
+}
+
 func ExamplePaginate() {
 	client, err := twittrapi.NewClient()
 	if err != nil {

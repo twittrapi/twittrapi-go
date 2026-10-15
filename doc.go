@@ -16,6 +16,8 @@
 // environment. Direct keys are sent to https://api.twittrapi.com in the X-API-KEY header.
 // RapidAPI keys are sent to https://twitter-aio.p.rapidapi.com in the x-rapidapi-key and
 // x-rapidapi-host headers.
+// For a key from another TwittrAPI listing on RapidAPI, set its host with
+// [WithRapidAPIHost] or RAPIDAPI_HOST.
 //
 // # Responses
 //

@@ -346,7 +346,7 @@ func (c *Client) buildURL(path string, query url.Values) string {
 // When the request uses the simple format (see [WithFormat] and [ContextWithFormat]),
 // format=simple is added to the query unless it already has a format parameter.
 func (c *Client) Get(ctx context.Context, path string, query url.Values) (json.RawMessage, error) {
-	return c.do(ctx, http.MethodGet, path, query, nil)
+	return c.do(ctx, http.MethodGet, path, query, nil, true)
 }
 
 // Post sends an authenticated POST request to path (relative to the base URL, already
@@ -357,10 +357,21 @@ func (c *Client) Post(ctx context.Context, path string, query url.Values, body a
 	if err != nil {
 		return nil, fmt.Errorf("twittrapi: encoding request body: %w", err)
 	}
-	return c.do(ctx, http.MethodPost, path, query, payload)
+	return c.do(ctx, http.MethodPost, path, query, payload, true)
 }
 
-func (c *Client) do(ctx context.Context, method, path string, query url.Values, payload []byte) (json.RawMessage, error) {
+// postAction sends a POST like [Client.Post]. With idempotent false, only 429 responses are
+// retried: after a timeout, a network error or a 5xx the action may already have run (a
+// tweet posted, a message sent), and repeating it could do it twice.
+func (c *Client) postAction(ctx context.Context, path string, body any, idempotent bool) (json.RawMessage, error) {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("twittrapi: encoding request body: %w", err)
+	}
+	return c.do(ctx, http.MethodPost, path, nil, payload, idempotent)
+}
+
+func (c *Client) do(ctx context.Context, method, path string, query url.Values, payload []byte, idempotent bool) (json.RawMessage, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -373,7 +384,7 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		if attempt >= c.maxRetries || !isRetryable(err) {
+		if attempt >= c.maxRetries || !isRetryable(err) || (!idempotent && !isRateLimit(err)) {
 			return nil, err
 		}
 		if serr := c.sleep(ctx, c.backoff(attempt, err)); serr != nil {
@@ -392,6 +403,11 @@ func isRetryable(err error) bool {
 		return apiErr.StatusCode == http.StatusTooManyRequests || apiErr.StatusCode >= 500
 	}
 	return false
+}
+
+func isRateLimit(err error) bool {
+	var rl *RateLimitError
+	return errors.As(err, &rl)
 }
 
 func (c *Client) backoff(attempt int, err error) time.Duration {

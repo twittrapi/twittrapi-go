@@ -4,6 +4,31 @@ All notable changes to this module are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-10-16
+
+### Added
+
+- Account actions: `Client.Account(XSession{Cookie, Proxy})` returns an `AccountService` for
+  the `/client/*` endpoints, run as your own X account. It covers tweets (`CreateTweet` with
+  quotes, long posts, community tweets and polls; `ScheduleTweet`, `ScheduledTweets`,
+  `DeleteScheduledTweet`, `Reply`, `DeleteTweet`), likes, retweets, pins, bookmarks,
+  `Report`, follow, mute and block (by ID or username via `UserByID` / `UserByUsername`),
+  `HomeTimeline`, `Bookmarks`, `Likes`, `Blocked`, `Muted`, `FollowersYouKnow`, lists,
+  communities (create, delete, join, leave), drafts, media uploads (`UploadImage`,
+  `UploadVideo`, `MediaStatus`), profile edits (`UpdateProfile`, `UpdateProfileImage`,
+  `UpdateProfileBanner`) and direct messages (`DMInbox`, `DMConversation`,
+  `DMConversationInfo`, `SetDMDisappearing`, `SendDM`, `DMSettings`, `UpdateDMSettings`;
+  the X Chat passcode is set with `WithDMPasscode`).
+- `XSession.String` and `GoString` mask the cookie values and the proxy credentials;
+  `AccountService` masks the session and the passcode too.
+- Actions that create something (tweets, replies, uploads, lists, communities, drafts,
+  reports, messages) are retried only after a 429, never after a timeout, network error or
+  5xx, so they do not run twice.
+- `UnwrapAccountResponse` decodes the `{"status_code", "response"}` wrapper of account
+  actions. `Paginate` reads cursors inside that wrapper, so it works with the paginated
+  account reads.
+- `Ptr` helper for optional fields.
+
 ## [1.0.0] - 2026-10-15
 
 First stable release: the API is stable and follows semantic versioning.
@@ -78,6 +103,7 @@ First stable release: the API is stable and follows semantic versioning.
   `All` for range-over-func on Go 1.23+), plus `ExtractCursors` and `ExtractBottomCursor`.
 - Standard library only.
 
+[1.1.0]: https://github.com/twittrapi/twittrapi-go/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.1.0...v0.2.0

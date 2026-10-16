@@ -9,7 +9,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Official Go SDK for [TwittrAPI](https://twittrapi.com), a REST API for public Twitter/X data:
-tweets, profiles, followers, search, lists and communities. From $0.065 per 1,000 calls, no X
+tweets, profiles, followers, search, lists and communities, plus account actions (post, like,
+follow, DMs) for your own X account. From $0.065 per 1,000 calls, no X
 developer account.
 
 > **Get an API key:** [twittrapi.com/start](https://twittrapi.com/start?utm_source=github&utm_medium=readme&utm_campaign=twittrapi-go) · [Pricing](https://twittrapi.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=twittrapi-go) · [Docs](https://twittrapi.com/docs?utm_source=github&utm_medium=readme&utm_campaign=twittrapi-go) · [Status](https://twittrapi.com/status) · also available on [RapidAPI](https://rapidapi.com/viperscores-viperscores-default/api/twitter-aio)
@@ -273,6 +274,43 @@ data, err := client.Get(ctx, "/some/endpoint", url.Values{"foo": {"bar"}})
 data, err = client.Post(ctx, "/some/endpoint", nil, map[string]any{"foo": "bar"})
 ```
 
+## Account actions
+
+Post, like, follow and more as your own X account. Pass the account's session to
+`client.Account`; every call is a POST to `/client/...` with the cookie and proxy in the body.
+
+```go
+acct := client.Account(twittrapi.XSession{
+	Cookie: os.Getenv("X_COOKIE"), // "auth_token=...; ct0=...; twid=u%3D..."
+	Proxy:  os.Getenv("X_PROXY"),  // "http://user:pass@host:port"
+})
+
+acct.CreateTweet(ctx, twittrapi.CreateTweetParams{Text: "Hello from Go"})
+acct.Reply(ctx, twittrapi.ReplyParams{TweetID: "20", Text: "Nice"})
+acct.Like(ctx, "20")
+acct.Follow(ctx, twittrapi.UserByUsername("jack")) // or twittrapi.UserByID("12")
+acct.Bookmarks(ctx, twittrapi.AccountPageParams{Count: 50})
+
+acct.UploadImage(ctx, twittrapi.ImageUpload{Data: png}) // media ID for CreateTweetParams.MediaIDs
+acct.UpdateProfile(ctx, twittrapi.ProfileUpdate{Description: twittrapi.Ptr("Gopher")})
+
+dm := acct.WithDMPasscode(os.Getenv("X_CHAT_PASSCODE"))
+dm.SendDM(ctx, twittrapi.SendDMParams{UserID: "12", Text: "hi"})
+```
+
+Also covered: delete, retweet, pin, mute, block, report, polls, scheduled tweets, home timeline,
+likes, blocked and muted accounts, lists, communities, drafts, video upload, profile picture
+and banner, and direct message settings. See the
+[package docs](https://pkg.go.dev/github.com/twittrapi/twittrapi-go#AccountService).
+
+The cookie and proxy are secrets: `XSession` and the service mask them when printed. The cookie
+comes from a logged-in x.com browser session; see
+[twittrapi.com/docs/x-session](https://twittrapi.com/docs/x-session). Use one proxy per account.
+
+Most answers are `{"status_code": ..., "response": "<X body>"}`; `twittrapi.UnwrapAccountResponse`
+returns X's status and body. Actions that create something (tweets, replies, uploads, messages)
+are not retried after a timeout or 5xx, so they never run twice.
+
 ## Pagination
 
 `twittrapi.Paginate` calls a paginated method repeatedly and follows the bottom cursor in each
@@ -385,6 +423,7 @@ default:
 429, 5xx, timeouts and network errors are retried up to `WithMaxRetries` times (default 2) with
 exponential backoff starting at 500 ms (capped at 8 seconds, with jitter). On 429 the
 `Retry-After` header is honoured (capped at 60 seconds). Other 4xx errors are not retried.
+Account actions that create something are retried only after a 429.
 Canceling the context stops the request and any pending retry.
 
 ## Examples

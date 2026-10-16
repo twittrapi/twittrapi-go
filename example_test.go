@@ -131,3 +131,27 @@ func ExampleUsersService_UsernameToID() {
 	}
 	fmt.Println(out)
 }
+
+func ExampleClient_Account() {
+	client, err := twittrapi.NewClient(twittrapi.WithAPIKey(os.Getenv("TWITTRAPI_API_KEY")))
+	if err != nil {
+		log.Fatal(err)
+	}
+	acct := client.Account(twittrapi.XSession{
+		Cookie: os.Getenv("X_COOKIE"), // "auth_token=...; ct0=...; twid=u%3D..."
+		Proxy:  os.Getenv("X_PROXY"),  // "http://user:pass@host:port"
+	})
+
+	raw, err := acct.CreateTweet(context.Background(), twittrapi.CreateTweetParams{Text: "Hello from Go"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	status, body, _ := twittrapi.UnwrapAccountResponse(raw)
+	fmt.Println(status, string(body))
+}
+
+func ExampleXSession_String() {
+	s := twittrapi.XSession{Cookie: "auth_token=abc; ct0=def", Proxy: "http://user:pass@proxy.example:8080"}
+	fmt.Println(s)
+	// Output: XSession{Cookie: "auth_token=***; ct0=***", Proxy: "http://***@proxy.example:8080"}
+}

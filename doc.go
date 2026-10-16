@@ -1,6 +1,7 @@
 // Package twittrapi is the official Go client for TwittrAPI (https://twittrapi.com), a
 // REST API for public Twitter/X data. It reads tweets, profiles, followers, search results,
-// lists, communities and trends.
+// lists, communities and trends, and runs account actions (posting, liking, following,
+// direct messages) for your own X account.
 //
 // The package uses only the standard library.
 //
@@ -39,6 +40,16 @@
 // takes a [context.Context] as its first argument.
 //
 //	user, err := client.Users.GetByUsername(ctx, "jack")
+//
+// # Account actions
+//
+// [Client.Account] returns an [AccountService] that posts, likes, follows, uploads media,
+// edits the profile, manages lists, communities and drafts, and reads and sends direct
+// messages as your own X account. It takes an [XSession] with the account's cookie and a
+// proxy; both are masked when printed:
+//
+//	acct := client.Account(twittrapi.XSession{Cookie: cookie, Proxy: proxy})
+//	_, err := acct.Like(ctx, "20")
 //
 // # Pagination
 //

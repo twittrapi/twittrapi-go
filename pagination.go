@@ -336,6 +336,9 @@ type PageIterator struct {
 // envelope: iteration follows nextCursor and stops when hasNextPage is false or nextCursor
 // is null. For typed pages use [PaginateSimple].
 //
+// Account reads such as [AccountService.Bookmarks] return X's body inside the wrapper
+// {"status_code": ..., "response": "..."}; the cursor is read from X's body.
+//
 // Cursor detection in raw responses is best-effort; see [ExtractCursors]. opts may be nil.
 func Paginate[P Pageable[P]](ctx context.Context, fn PageFunc[P], params P, opts *PaginateOptions) *PageIterator {
 	maxPages := DefaultMaxPages
@@ -377,11 +380,12 @@ func (it *PageIterator) Next() bool {
 			it.done = true
 			return false
 		}
-		if items, cursors := CountTimelineEntries(it.page.Data); items == 0 && cursors > 0 {
+		body := pageBody(it.page.Data)
+		if items, cursors := CountTimelineEntries(body); items == 0 && cursors > 0 {
 			it.done = true
 			return false
 		}
-		if isSlice, items := sliceItems(it.page.Data); isSlice && items == 0 {
+		if isSlice, items := sliceItems(body); isSlice && items == 0 {
 			it.done = true
 			return false
 		}
@@ -399,7 +403,7 @@ func (it *PageIterator) Next() bool {
 		// Simple format: nextCursor is null (or hasNextPage false) on the last page.
 		next = cursor
 	} else {
-		next = ExtractBottomCursor(data)
+		next = ExtractBottomCursor(pageBody(data))
 	}
 	it.page = Page{
 		Data:       data,

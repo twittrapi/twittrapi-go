@@ -263,6 +263,12 @@ func (a *AccountService) LeaveCommunity(ctx context.Context, communityID string)
 	return a.idAction(ctx, "/client/communities/leave", "community_id", "communityID", communityID, true)
 }
 
+// CommunityMemberships returns the communities the account belongs to. Paginated.
+// POST /client/communities/memberships.
+func (a *AccountService) CommunityMemberships(ctx context.Context, p AccountCursorParams) (json.RawMessage, error) {
+	return a.send(ctx, "/client/communities/memberships", cursorFields(p.Cursor), true)
+}
+
 // Drafts lists the account's draft tweets. POST /client/drafts.
 func (a *AccountService) Drafts(ctx context.Context, p DraftsParams) (json.RawMessage, error) {
 	f := fields{}

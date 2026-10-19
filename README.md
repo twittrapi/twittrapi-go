@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Official Go SDK for [TwittrAPI](https://twittrapi.com), a REST API for public Twitter/X data:
-tweets, profiles, followers, search, lists and communities, plus account actions (post, like,
+tweets, profiles, followers, search, lists, communities and Spaces, plus account actions (post, like,
 follow, DMs) for your own X account. From $0.065 per 1,000 calls, no X
 developer account.
 
@@ -136,6 +136,10 @@ client.Users.Media(ctx, twittrapi.UserTimelineParams{UserID: "12"})
 client.Users.Followers(ctx, twittrapi.UserTimelineParams{Username: "jack", Count: 100})
 client.Users.Following(ctx, twittrapi.UserTimelineParams{UserID: "12"})
 client.Users.VerifiedFollowers(ctx, twittrapi.UserTimelineParams{UserID: "12"})
+client.Users.Affiliates(ctx, twittrapi.UserTimelineParams{Username: "XDevelopers"}) // accounts affiliated with an organization
+
+client.Users.FriendshipsBatch(ctx, "jack", []string{"elonmusk", "XDevelopers"}) // up to 50 targets, one call each
+client.Users.AboutBatch(ctx, []string{"jack", "XDevelopers"})                 // "About this account", up to 20, one call each
 ```
 
 ### Tweets
@@ -145,6 +149,8 @@ client.Tweets.Get(ctx, twittrapi.TweetParams{TweetID: "20"}) // tweet plus reply
 client.Tweets.Get(ctx, twittrapi.TweetParams{TweetID: "20", RankingMode: twittrapi.RankingRecency}) // Relevance | Recency | Likes
 client.Tweets.Retweeters(ctx, twittrapi.TweetPageParams{TweetID: "20"})
 client.Tweets.Quotes(ctx, twittrapi.TweetPageParams{TweetID: "20"})
+client.Tweets.Replies(ctx, twittrapi.RepliesParams{TweetID: "20", RankingMode: twittrapi.RankingLikes}) // only the replies
+client.Tweets.Thread(ctx, twittrapi.ThreadParams{TweetID: "20"})                                       // the author's thread, one page
 
 // Likers works only for your own tweets: X shows who liked a tweet only to its author.
 // Pass the Cookie header of the account that posted it (with auth_token and ct0) and a proxy.
@@ -180,8 +186,15 @@ client.Lists.Members(ctx, twittrapi.ListPageParams{ListID: "1234567890"})
 
 ```go
 client.Communities.Get(ctx, "1234567890")
+client.Communities.About(ctx, "1234567890") // rules, moderators, members preview
 client.Communities.Tweets(ctx, twittrapi.CommunityPageParams{CommunityID: "1234567890"})
 client.Communities.Search(ctx, twittrapi.CommunitySearchParams{Query: "golang"})
+```
+
+### Spaces
+
+```go
+client.Spaces.Get(ctx, "1YqKDqWqdPLsV") // ID from x.com/i/spaces/<id>
 ```
 
 ### Trends
@@ -256,7 +269,9 @@ if err := it.Err(); err != nil {
 
 Types: `SimpleTweet`, `SimpleUser`, `SimpleUserAbout`, `SimpleList`, `SimpleCommunity`,
 `SimpleTrend`, `SimpleTrendLocation` and `SimplePage[T]`. A tweet X did not return is decoded
-with only `ID` and `Unavailable: true`.
+with only `ID` and `Unavailable: true`. `Users.Affiliates` pages are users, `Tweets.Replies` and
+`Tweets.Thread` pages are tweets. `Spaces.Get`, `Communities.About`, the batch lookups and the
+account actions have no simple format.
 
 To get the simple format as `json.RawMessage` from every method, create the client with
 `twittrapi.WithFormat(twittrapi.FormatSimple)`, or set it for one call with
@@ -290,6 +305,7 @@ acct.Reply(ctx, twittrapi.ReplyParams{TweetID: "20", Text: "Nice"})
 acct.Like(ctx, "20")
 acct.Follow(ctx, twittrapi.UserByUsername("jack")) // or twittrapi.UserByID("12")
 acct.Bookmarks(ctx, twittrapi.AccountPageParams{Count: 50})
+acct.SearchBookmarks(ctx, twittrapi.SearchBookmarksParams{Query: "golang"})
 
 acct.UploadImage(ctx, twittrapi.ImageUpload{Data: png}) // media ID for CreateTweetParams.MediaIDs
 acct.UpdateProfile(ctx, twittrapi.ProfileUpdate{Description: twittrapi.Ptr("Gopher")})
@@ -299,9 +315,24 @@ dm.SendDM(ctx, twittrapi.SendDMParams{UserID: "12", Text: "hi"})
 ```
 
 Also covered: delete, retweet, pin, mute, block, report, polls, scheduled tweets, home timeline,
-likes, blocked and muted accounts, lists, communities, drafts, video upload, profile picture
-and banner, and direct message settings. See the
+likes, blocked and muted accounts, lists, communities and your memberships, drafts, video
+upload, profile picture and banner, and direct message settings. See the
 [package docs](https://pkg.go.dev/github.com/twittrapi/twittrapi-go#AccountService).
+
+Bookmark folders and articles need X Premium on the account:
+
+```go
+acct.BookmarkFolders(ctx, twittrapi.AccountCursorParams{})
+acct.BookmarkFolder(ctx, twittrapi.BookmarkFolderParams{FolderID: "1700000000000000000"})
+
+acct.Articles(ctx, twittrapi.ArticlesParams{Lifecycle: twittrapi.ArticlePublished})
+acct.Article(ctx, "1800000000000000000")
+acct.CreateArticle(ctx, twittrapi.CreateArticleParams{Title: "Hello", Text: "First paragraph\nSecond"})
+acct.UpdateArticle(ctx, twittrapi.UpdateArticleParams{ArticleID: "1800000000000000000", Title: twittrapi.Ptr("New title")})
+acct.PublishArticle(ctx, twittrapi.PublishArticleParams{ArticleID: "1800000000000000000", TweetText: "New article"})
+acct.UnpublishArticle(ctx, "1800000000000000000")
+acct.DeleteArticle(ctx, "1800000000000000000")
+```
 
 The cookie and proxy are secrets: `XSession` and the service mask them when printed. The cookie
 comes from a logged-in x.com browser session; see
@@ -309,7 +340,7 @@ comes from a logged-in x.com browser session; see
 
 Most answers are `{"status_code": ..., "response": "<X body>"}`; `twittrapi.UnwrapAccountResponse`
 returns X's status and body. Actions that create something (tweets, replies, uploads, messages)
-are not retried after a timeout or 5xx, so they never run twice.
+and article changes are not retried after a timeout or 5xx, so they never run twice.
 
 ## Pagination
 
@@ -423,7 +454,7 @@ default:
 429, 5xx, timeouts and network errors are retried up to `WithMaxRetries` times (default 2) with
 exponential backoff starting at 500 ms (capped at 8 seconds, with jitter). On 429 the
 `Retry-After` header is honoured (capped at 60 seconds). Other 4xx errors are not retried.
-Account actions that create something are retried only after a 429.
+Account actions that create something and article changes are retried only after a 429.
 Canceling the context stops the request and any pending retry.
 
 ## Examples

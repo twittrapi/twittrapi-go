@@ -27,6 +27,8 @@ const (
 	profileURLMax   = 100
 	maxVideoLength  = 4 * time.Hour
 	dmInboxMaxCount = 50
+
+	bookmarkSearchMax = 500
 )
 
 // ReplyControl sets who can reply to a tweet posted with [AccountService.CreateTweet].
@@ -186,6 +188,44 @@ func (p FollowersYouKnowParams) PageCursor() string { return p.Cursor }
 
 // WithCursor returns a copy of p with Cursor set. It implements [Pageable].
 func (p FollowersYouKnowParams) WithCursor(cursor string) FollowersYouKnowParams {
+	p.Cursor = cursor
+	return p
+}
+
+// BookmarkFolderParams selects a bookmark folder and a page for
+// [AccountService.BookmarkFolder].
+type BookmarkFolderParams struct {
+	// FolderID is the numeric folder ID from [AccountService.BookmarkFolders]. Required.
+	FolderID string
+	// Cursor requests a specific page. Leave empty for the first page.
+	Cursor string
+}
+
+// PageCursor returns p.Cursor. It implements [Pageable].
+func (p BookmarkFolderParams) PageCursor() string { return p.Cursor }
+
+// WithCursor returns a copy of p with Cursor set. It implements [Pageable].
+func (p BookmarkFolderParams) WithCursor(cursor string) BookmarkFolderParams {
+	p.Cursor = cursor
+	return p
+}
+
+// SearchBookmarksParams describes a search for [AccountService.SearchBookmarks].
+type SearchBookmarksParams struct {
+	// Query is the text to search for in the account's bookmarks, up to 500 characters.
+	// Required.
+	Query string
+	// Count is the page size, from 1 to 100. 0 uses the API default (20).
+	Count int
+	// Cursor requests a specific page. Leave empty for the first page.
+	Cursor string
+}
+
+// PageCursor returns p.Cursor. It implements [Pageable].
+func (p SearchBookmarksParams) PageCursor() string { return p.Cursor }
+
+// WithCursor returns a copy of p with Cursor set. It implements [Pageable].
+func (p SearchBookmarksParams) WithCursor(cursor string) SearchBookmarksParams {
 	p.Cursor = cursor
 	return p
 }
@@ -457,6 +497,46 @@ func (a *AccountService) HomeTimeline(ctx context.Context, p HomeTimelineParams)
 // Bookmarks returns the account's bookmarks. Paginated. POST /client/bookmarks.
 func (a *AccountService) Bookmarks(ctx context.Context, p AccountPageParams) (json.RawMessage, error) {
 	return a.page(ctx, "/client/bookmarks", p)
+}
+
+// BookmarkFolders returns the account's bookmark folders with their IDs. Paginated.
+// POST /client/bookmarks/folders.
+//
+// Needs X Premium: without it X refuses with error code 37 ("Twitter Blue claim is not
+// enabled").
+func (a *AccountService) BookmarkFolders(ctx context.Context, p AccountCursorParams) (json.RawMessage, error) {
+	return a.send(ctx, "/client/bookmarks/folders", cursorFields(p.Cursor), true)
+}
+
+// BookmarkFolder returns the tweets in one bookmark folder. Paginated.
+// POST /client/bookmarks/folder.
+//
+// Needs X Premium: without it X refuses with error code 37 ("Twitter Blue claim is not
+// enabled").
+func (a *AccountService) BookmarkFolder(ctx context.Context, p BookmarkFolderParams) (json.RawMessage, error) {
+	id, err := numericID("FolderID", p.FolderID)
+	if err != nil {
+		return nil, err
+	}
+	f := cursorFields(p.Cursor)
+	f["folder_id"] = id
+	return a.send(ctx, "/client/bookmarks/folder", f, true)
+}
+
+// SearchBookmarks searches the account's bookmarks. Paginated. POST /client/bookmarks/search.
+func (a *AccountService) SearchBookmarks(ctx context.Context, p SearchBookmarksParams) (json.RawMessage, error) {
+	query, err := nonEmpty("Query", p.Query)
+	if err != nil {
+		return nil, err
+	}
+	if err := maxText("Query", &query, bookmarkSearchMax); err != nil {
+		return nil, err
+	}
+	f := fields{"query": query}
+	if err := addPage(f, p.Count, p.Cursor); err != nil {
+		return nil, err
+	}
+	return a.send(ctx, "/client/bookmarks/search", f, true)
 }
 
 // Blocked returns the accounts this account blocks. Paginated. POST /client/blocked.

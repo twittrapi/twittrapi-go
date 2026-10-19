@@ -75,6 +75,8 @@ type Client struct {
 	Communities *CommunitiesService
 	// Trends groups trending topic endpoints.
 	Trends *TrendsService
+	// Spaces groups X Spaces endpoints.
+	Spaces *SpacesService
 
 	authMode     AuthMode
 	apiKey       string
@@ -290,6 +292,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.Lists = &ListsService{client: c}
 	c.Communities = &CommunitiesService{client: c}
 	c.Trends = &TrendsService{client: c}
+	c.Spaces = &SpacesService{client: c}
 	return c, nil
 }
 

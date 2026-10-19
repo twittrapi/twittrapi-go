@@ -114,6 +114,53 @@ func (s *UsersService) VerifiedFollowers(ctx context.Context, p UserTimelinePara
 	return s.timeline(ctx, "verifiedFollowers", p)
 }
 
+// Affiliates returns the accounts affiliated with an organization (the Affiliates tab of a
+// verified organization's profile). Paginated. In the simple format it is a list of users,
+// like [UsersService.Followers].
+func (s *UsersService) Affiliates(ctx context.Context, p UserTimelineParams) (json.RawMessage, error) {
+	return s.timeline(ctx, "affiliates", p)
+}
+
+// FriendshipsBatch returns the relationship between source and up to
+// [MaxFriendshipTargets] (50) other accounts in one call. Handles may have a leading "@";
+// duplicates are dropped (case-insensitive). Each target is billed as one call.
+//
+// The answer is built by the API: {"source_screen_name": "...", "relationships":
+// [{"target_screen_name": "...", "relationship": {...}}], "errors": [{"username", "error",
+// "message"}]}, with relationships in input order and "errors" only when a lookup failed.
+// Each relationship is the object GET /user/friendships/show returns. There is no simple
+// format.
+func (s *UsersService) FriendshipsBatch(ctx context.Context, source string, targets []string) (json.RawMessage, error) {
+	src, err := handle("source", source)
+	if err != nil {
+		return nil, err
+	}
+	names, err := handleList("targets", targets, MaxFriendshipTargets)
+	if err != nil {
+		return nil, err
+	}
+	return s.client.Get(ctx, "/user/friendships/batch", url.Values{
+		"source_screen_name":  {src},
+		"target_screen_names": {strings.Join(names, ",")},
+	})
+}
+
+// AboutBatch returns the "About this account" details of up to [MaxAboutUsernames] (20)
+// accounts in one call. Handles may have a leading "@"; duplicates are dropped
+// (case-insensitive). Each handle is billed as one call.
+//
+// The answer is built by the API: {"users": [{"username": "...", "about": {...}}],
+// "errors": [{"username", "error": "not_found" | "upstream_error", "message"}]}, with
+// "errors" only when a lookup failed. Each about is the object GET /user/about/{username}
+// returns. There is no simple format.
+func (s *UsersService) AboutBatch(ctx context.Context, usernames []string) (json.RawMessage, error) {
+	names, err := handleList("usernames", usernames, MaxAboutUsernames)
+	if err != nil {
+		return nil, err
+	}
+	return s.client.Get(ctx, "/user/about/batch", url.Values{"usernames": {strings.Join(names, ",")}})
+}
+
 // timeline builds /user/{id}/{suffix}. With only a username the path uses -1 and the API
 // resolves ?username=.
 func (s *UsersService) timeline(ctx context.Context, suffix string, p UserTimelineParams) (json.RawMessage, error) {

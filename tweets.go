@@ -6,7 +6,8 @@ import (
 	"net/url"
 )
 
-// RankingMode sets the sort order of replies returned by [TweetsService.Get].
+// RankingMode sets the sort order of replies returned by [TweetsService.Get],
+// [TweetsService.Replies] and [TweetsService.Thread].
 type RankingMode string
 
 const (
@@ -42,6 +43,41 @@ func (p TweetParams) PageCursor() string { return p.Cursor }
 func (p TweetParams) WithCursor(cursor string) TweetParams {
 	p.Cursor = cursor
 	return p
+}
+
+// RepliesParams selects a tweet and a page for [TweetsService.Replies].
+type RepliesParams struct {
+	// TweetID is the numeric tweet ID. Required.
+	TweetID string
+	// RankingMode sets the sort order of the replies. Empty uses the API default
+	// (Relevance).
+	RankingMode RankingMode
+	// IncludePromotedContent asks X to include promoted replies (ads). The default leaves
+	// them out.
+	IncludePromotedContent bool
+	// Cursor loads more replies. Leave empty for the first page.
+	Cursor string
+}
+
+// PageCursor returns p.Cursor. It implements [Pageable].
+func (p RepliesParams) PageCursor() string { return p.Cursor }
+
+// WithCursor returns a copy of p with Cursor set. It implements [Pageable].
+func (p RepliesParams) WithCursor(cursor string) RepliesParams {
+	p.Cursor = cursor
+	return p
+}
+
+// ThreadParams selects a tweet for [TweetsService.Thread].
+type ThreadParams struct {
+	// TweetID is the numeric ID of any tweet in the thread. Required.
+	TweetID string
+	// RankingMode is passed to X with the request. Empty uses the API default
+	// (Relevance).
+	RankingMode RankingMode
+	// IncludePromotedContent asks X to include promoted content. The default leaves it
+	// out.
+	IncludePromotedContent bool
 }
 
 // TweetPageParams selects a tweet and a page for retweeters and quotes.
@@ -100,6 +136,47 @@ func (s *TweetsService) Get(ctx context.Context, p TweetParams) (json.RawMessage
 		return nil, err
 	}
 	return s.client.Get(ctx, "/tweet/"+id, url.Values{"rankingMode": {mode}, "cursor": {p.Cursor}})
+}
+
+// Replies returns only the replies to a tweet, without the tweet itself or the tweets
+// above it. Paginated. In the simple format it is a list of tweets in display order, like
+// [TweetsService.Get].
+func (s *TweetsService) Replies(ctx context.Context, p RepliesParams) (json.RawMessage, error) {
+	id, q, err := conversationQuery(p.TweetID, p.RankingMode, p.IncludePromotedContent)
+	if err != nil {
+		return nil, err
+	}
+	q.Set("cursor", p.Cursor)
+	return s.client.Get(ctx, "/tweet/"+id+"/replies", q)
+}
+
+// Thread returns the author's own thread around a tweet: their tweets above it and their
+// replies to themselves below it, up to the first reply by someone else. Long threads are
+// loaded by the API, so there is one page and one billed call. In the simple format it is
+// a list of tweets in reading order.
+func (s *TweetsService) Thread(ctx context.Context, p ThreadParams) (json.RawMessage, error) {
+	id, q, err := conversationQuery(p.TweetID, p.RankingMode, p.IncludePromotedContent)
+	if err != nil {
+		return nil, err
+	}
+	return s.client.Get(ctx, "/tweet/"+id+"/thread", q)
+}
+
+// conversationQuery validates the tweet ID and options of Replies and Thread.
+func conversationQuery(tweetID string, mode RankingMode, promoted bool) (string, url.Values, error) {
+	id, err := numericID("TweetID", tweetID)
+	if err != nil {
+		return "", nil, err
+	}
+	m, err := oneOf("RankingMode", string(mode), rankingModes)
+	if err != nil {
+		return "", nil, err
+	}
+	q := url.Values{"rankingMode": {m}}
+	if promoted {
+		q.Set("includePromotedContent", "true")
+	}
+	return id, q, nil
 }
 
 // Retweeters returns users who retweeted a tweet. Paginated.

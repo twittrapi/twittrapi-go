@@ -56,6 +56,17 @@ func (s *CommunitiesService) Get(ctx context.Context, communityID string) (json.
 	return s.client.Get(ctx, "/communities/"+id, nil)
 }
 
+// About returns a community's About page: description, rules, creation date, moderators
+// and a preview of the members. There is no simple format: the response is X's raw JSON
+// either way.
+func (s *CommunitiesService) About(ctx context.Context, communityID string) (json.RawMessage, error) {
+	id, err := numericID("communityID", communityID)
+	if err != nil {
+		return nil, err
+	}
+	return s.client.Get(ctx, "/communities/"+id+"/about", nil)
+}
+
 // Tweets returns tweets posted in a community. Paginated.
 func (s *CommunitiesService) Tweets(ctx context.Context, p CommunityPageParams) (json.RawMessage, error) {
 	id, err := numericID("CommunityID", p.CommunityID)

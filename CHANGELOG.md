@@ -4,6 +4,33 @@ All notable changes to this module are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-19
+
+### Added
+
+- `Client.Spaces` with `Spaces.Get`: an X Space by ID (raw only).
+- `Communities.About`: a community's About page with rules, moderators and a members preview
+  (raw only).
+- `Users.Affiliates`: accounts affiliated with an organization. Paginated; simple pages are
+  users.
+- `Tweets.Replies` (`RepliesParams`): only the replies to a tweet, with `RankingMode`,
+  `IncludePromotedContent` and `Cursor`. Paginated; simple pages are tweets.
+- `Tweets.Thread` (`ThreadParams`): the author's own thread around a tweet in one page; simple
+  pages are tweets.
+- `Users.FriendshipsBatch`: relationships of one account with up to 50 others
+  (`MaxFriendshipTargets`), and `Users.AboutBatch`: "About this account" for up to 20 handles
+  (`MaxAboutUsernames`). Handles are checked and duplicates dropped before the request; each
+  handle is billed as one call. Raw only.
+- Account reads: `BookmarkFolders` and `BookmarkFolder` (X Premium), `SearchBookmarks` and
+  `CommunityMemberships`, all paginated (`AccountCursorParams`, `BookmarkFolderParams`,
+  `SearchBookmarksParams`).
+- Articles (X Premium): `Articles`, `Article`, `CreateArticle`, `UpdateArticle`,
+  `PublishArticle`, `UnpublishArticle` and `DeleteArticle`, with `ArticlesParams`,
+  `CreateArticleParams`, `UpdateArticleParams`, `PublishArticleParams` and the
+  `ArticleLifecycle`, `ArticleVisibility`, `ArticleReplyControl` and `ArticleCoverCategory`
+  constants. Article changes are retried only after a 429, never after a timeout, network
+  error or 5xx.
+
 ## [1.1.0] - 2026-10-16
 
 ### Added
@@ -103,6 +130,7 @@ First stable release: the API is stable and follows semantic versioning.
   `All` for range-over-func on Go 1.23+), plus `ExtractCursors` and `ExtractBottomCursor`.
 - Standard library only.
 
+[1.2.0]: https://github.com/twittrapi/twittrapi-go/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/twittrapi/twittrapi-go/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.2.0...v0.3.0

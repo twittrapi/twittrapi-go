@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -498,5 +499,73 @@ func TestPaginateRawIteratorUnderstandsSimplePages(t *testing.T) {
 	reqs := rec.all()
 	if reqs[1].URL.Query().Get("cursor") != nexts[0] || reqs[1].URL.Query().Get("format") != "simple" {
 		t.Fatalf("second request = %s", reqs[1].URL)
+	}
+}
+
+func TestSimpleFormatNewCollections(t *testing.T) {
+	ctx := context.Background()
+
+	srv, rec := newServer(t, response{status: 200, body: string(simpleFixture(t, "user-userid-followers"))})
+	c, _ := newTestClient(t, srv)
+	users, err := FetchSimplePage[SimpleUser](ctx, c.Users.Affiliates, UserTimelineParams{Username: "XDevelopers"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(users.Data) == 0 || users.Data[0].Username == "" {
+		t.Fatalf("affiliates = %+v", users)
+	}
+	if r := rec.last(t); r.URL.Path != "/user/-1/affiliates" || r.URL.Query().Get("format") != "simple" {
+		t.Fatalf("request = %s", r.URL)
+	}
+
+	srv, rec = newServer(t,
+		response{status: 200, body: simpleTweetPage(t, []string{"21", "22"}, "R2")},
+		response{status: 200, body: simpleTweetPage(t, []string{"23"}, "")},
+	)
+	c, _ = newTestClient(t, srv)
+	it := PaginateSimple[SimpleTweet](ctx, c.Tweets.Replies, RepliesParams{TweetID: "20", RankingMode: RankingRecency}, nil)
+	var ids []string
+	for it.Next() {
+		for _, tw := range it.Page().Data {
+			ids = append(ids, tw.ID)
+		}
+	}
+	if it.Err() != nil || strings.Join(ids, ",") != "21,22,23" {
+		t.Fatalf("replies ids=%v err=%v", ids, it.Err())
+	}
+	if q := rec.last(t).URL.Query(); q.Get("cursor") != "R2" || q.Get("rankingMode") != "Recency" || q.Get("format") != "simple" {
+		t.Fatalf("replies query = %v", q)
+	}
+
+	srv, rec = newServer(t, response{status: 200, body: simpleTweetPage(t, []string{"19", "20", "24"}, "")})
+	c, _ = newTestClient(t, srv)
+	thread, err := FetchSimplePage[SimpleTweet](ctx, c.Tweets.Thread, ThreadParams{TweetID: "20"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(thread.Data) != 3 || thread.HasNextPage || thread.Next() != "" {
+		t.Fatalf("thread = %+v", thread)
+	}
+	if r := rec.last(t); r.URL.Path != "/tweet/20/thread" || r.URL.Query().Get("format") != "simple" {
+		t.Fatalf("request = %s", r.URL)
+	}
+}
+
+func TestNewPublicReadsAreRetried(t *testing.T) {
+	ctx := context.Background()
+	for name, call := range map[string]func(c *Client) (json.RawMessage, error){
+		"Spaces.Get":             func(c *Client) (json.RawMessage, error) { return c.Spaces.Get(ctx, "1YqKDqWqdPLsV") },
+		"Communities.About":      func(c *Client) (json.RawMessage, error) { return c.Communities.About(ctx, "1500") },
+		"Users.FriendshipsBatch": func(c *Client) (json.RawMessage, error) { return c.Users.FriendshipsBatch(ctx, "a", []string{"b"}) },
+		"Users.AboutBatch":       func(c *Client) (json.RawMessage, error) { return c.Users.AboutBatch(ctx, []string{"a"}) },
+	} {
+		srv, rec := newServer(t, response{status: 503, body: `{"error":"busy"}`}, response{status: 200, body: `{}`})
+		c, _ := newTestClient(t, srv)
+		if _, err := call(c); err != nil {
+			t.Errorf("%s: %v", name, err)
+		}
+		if n := len(rec.all()); n != 2 {
+			t.Errorf("%s: %d requests, want 2", name, n)
+		}
 	}
 }

@@ -59,6 +59,18 @@ func endpointCases() []endpointCase {
 		{"Users.VerifiedFollowers", func(c *Client) (json.RawMessage, error) {
 			return c.Users.VerifiedFollowers(ctx, UserTimelineParams{UserID: "12", Cursor: "c1"})
 		}, "/user/12/verifiedFollowers", url.Values{"cursor": {"c1"}}},
+		{"Users.Affiliates by username", func(c *Client) (json.RawMessage, error) {
+			return c.Users.Affiliates(ctx, UserTimelineParams{Username: "@XDevelopers", Count: 100, Cursor: "a1"})
+		}, "/user/-1/affiliates", url.Values{"username": {"XDevelopers"}, "count": {"100"}, "cursor": {"a1"}}},
+		{"Users.Affiliates by ID", func(c *Client) (json.RawMessage, error) {
+			return c.Users.Affiliates(ctx, UserTimelineParams{UserID: "783214"})
+		}, "/user/783214/affiliates", url.Values{}},
+		{"Users.FriendshipsBatch", func(c *Client) (json.RawMessage, error) {
+			return c.Users.FriendshipsBatch(ctx, " @jack ", []string{"@elonmusk", " XDevelopers ", "ELONMUSK", "jack"})
+		}, "/user/friendships/batch", url.Values{"source_screen_name": {"jack"}, "target_screen_names": {"elonmusk,XDevelopers,jack"}}},
+		{"Users.AboutBatch", func(c *Client) (json.RawMessage, error) {
+			return c.Users.AboutBatch(ctx, []string{"@jack", "Jack", "x_dev"})
+		}, "/user/about/batch", url.Values{"usernames": {"jack,x_dev"}}},
 
 		// Tweets
 		{"Tweets.Get", func(c *Client) (json.RawMessage, error) {
@@ -76,6 +88,18 @@ func endpointCases() []endpointCase {
 		{"Tweets.Quotes", func(c *Client) (json.RawMessage, error) {
 			return c.Tweets.Quotes(ctx, TweetPageParams{TweetID: "20", Cursor: "q"})
 		}, "/tweet/20/quotes", url.Values{"cursor": {"q"}}},
+		{"Tweets.Replies", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Replies(ctx, RepliesParams{TweetID: " 20 "})
+		}, "/tweet/20/replies", url.Values{}},
+		{"Tweets.Replies with options", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Replies(ctx, RepliesParams{TweetID: "20", RankingMode: RankingLikes, IncludePromotedContent: true, Cursor: "r"})
+		}, "/tweet/20/replies", url.Values{"rankingMode": {"Likes"}, "includePromotedContent": {"true"}, "cursor": {"r"}}},
+		{"Tweets.Thread", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Thread(ctx, ThreadParams{TweetID: "20"})
+		}, "/tweet/20/thread", url.Values{}},
+		{"Tweets.Thread with options", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Thread(ctx, ThreadParams{TweetID: "20", RankingMode: RankingRecency, IncludePromotedContent: true})
+		}, "/tweet/20/thread", url.Values{"rankingMode": {"Recency"}, "includePromotedContent": {"true"}}},
 
 		// Search
 		{"Search.Tweets", func(c *Client) (json.RawMessage, error) {
@@ -98,6 +122,8 @@ func endpointCases() []endpointCase {
 		// Communities
 		{"Communities.Get", func(c *Client) (json.RawMessage, error) { return c.Communities.Get(ctx, "1500") },
 			"/communities/1500", url.Values{}},
+		{"Communities.About", func(c *Client) (json.RawMessage, error) { return c.Communities.About(ctx, " 1500 ") },
+			"/communities/1500/about", url.Values{}},
 		{"Communities.Tweets", func(c *Client) (json.RawMessage, error) {
 			return c.Communities.Tweets(ctx, CommunityPageParams{CommunityID: "1500", Count: 7})
 		}, "/communities/1500/tweets", url.Values{"count": {"7"}}},
@@ -112,6 +138,10 @@ func endpointCases() []endpointCase {
 			"/trends/1", url.Values{}},
 		{"Trends.Locations", func(c *Client) (json.RawMessage, error) { return c.Trends.Locations(ctx) },
 			"/misc/locations", url.Values{}},
+
+		// Spaces
+		{"Spaces.Get", func(c *Client) (json.RawMessage, error) { return c.Spaces.Get(ctx, " 1YqKDqWqdPLsV ") },
+			"/spaces/1YqKDqWqdPLsV", url.Values{}},
 	}
 }
 
@@ -139,12 +169,13 @@ func TestEndpoints(t *testing.T) {
 	}
 }
 
-// TestEndpointCoverage makes sure there are 23 service methods and that each one has a row
+// TestEndpointCoverage makes sure there are 30 service methods and that each one has a row
 // in endpointCases.
 func TestEndpointCoverage(t *testing.T) {
 	services := map[string]any{
 		"Users": &UsersService{}, "Tweets": &TweetsService{}, "Search": &SearchService{},
 		"Lists": &ListsService{}, "Communities": &CommunitiesService{}, "Trends": &TrendsService{},
+		"Spaces": &SpacesService{},
 	}
 	covered := map[string]bool{}
 	for _, tc := range endpointCases() {
@@ -161,8 +192,8 @@ func TestEndpointCoverage(t *testing.T) {
 			}
 		}
 	}
-	if total != 23 {
-		t.Fatalf("expected 23 endpoint methods, found %d", total)
+	if total != 30 {
+		t.Fatalf("expected 30 endpoint methods, found %d", total)
 	}
 }
 
@@ -220,6 +251,44 @@ func TestValidation(t *testing.T) {
 		{"empty community search", func(c *Client) (json.RawMessage, error) {
 			return c.Communities.Search(ctx, CommunitySearchParams{})
 		}, "Query must be"},
+		{"bad space ID", func(c *Client) (json.RawMessage, error) { return c.Spaces.Get(ctx, "1Yq-KD") }, "spaceID must be"},
+		{"empty space ID", func(c *Client) (json.RawMessage, error) { return c.Spaces.Get(ctx, " ") }, "spaceID must be"},
+		{"long space ID", func(c *Client) (json.RawMessage, error) { return c.Spaces.Get(ctx, strings.Repeat("a", 33)) }, "spaceID must be"},
+		{"bad community ID about", func(c *Client) (json.RawMessage, error) { return c.Communities.About(ctx, "abc") }, "numeric ID"},
+		{"affiliates without user", func(c *Client) (json.RawMessage, error) {
+			return c.Users.Affiliates(ctx, UserTimelineParams{})
+		}, "UserID or Username"},
+		{"affiliates count too high", func(c *Client) (json.RawMessage, error) {
+			return c.Users.Affiliates(ctx, UserTimelineParams{UserID: "12", Count: 101})
+		}, "count must be"},
+		{"bad tweet ID replies", func(c *Client) (json.RawMessage, error) { return c.Tweets.Replies(ctx, RepliesParams{TweetID: "x"}) }, "numeric ID"},
+		{"bad ranking mode replies", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Replies(ctx, RepliesParams{TweetID: "20", RankingMode: "recency"})
+		}, "RankingMode must be one of"},
+		{"bad tweet ID thread", func(c *Client) (json.RawMessage, error) { return c.Tweets.Thread(ctx, ThreadParams{}) }, "numeric ID"},
+		{"bad ranking mode thread", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.Thread(ctx, ThreadParams{TweetID: "20", RankingMode: "Top"})
+		}, "RankingMode must be one of"},
+		{"friendships empty source", func(c *Client) (json.RawMessage, error) {
+			return c.Users.FriendshipsBatch(ctx, "@", []string{"jack"})
+		}, "source must be a username"},
+		{"friendships bad source", func(c *Client) (json.RawMessage, error) {
+			return c.Users.FriendshipsBatch(ctx, "jack dorsey", []string{"jack"})
+		}, "source must be a username"},
+		{"friendships no targets", func(c *Client) (json.RawMessage, error) { return c.Users.FriendshipsBatch(ctx, "jack", nil) }, "targets must contain at least one"},
+		{"friendships bad target", func(c *Client) (json.RawMessage, error) {
+			return c.Users.FriendshipsBatch(ctx, "jack", []string{"ok", "a,b"})
+		}, "each username in targets"},
+		{"friendships too many", func(c *Client) (json.RawMessage, error) {
+			return c.Users.FriendshipsBatch(ctx, "jack", handles(MaxFriendshipTargets+1))
+		}, "at most 50"},
+		{"about batch empty", func(c *Client) (json.RawMessage, error) { return c.Users.AboutBatch(ctx, []string{}) }, "usernames must contain at least one"},
+		{"about batch long handle", func(c *Client) (json.RawMessage, error) {
+			return c.Users.AboutBatch(ctx, []string{strings.Repeat("a", 16)})
+		}, "each username in usernames"},
+		{"about batch too many", func(c *Client) (json.RawMessage, error) {
+			return c.Users.AboutBatch(ctx, handles(MaxAboutUsernames+1))
+		}, "at most 20"},
 		{"negative WOEID", func(c *Client) (json.RawMessage, error) { return c.Trends.Get(ctx, -1) }, "WOEID"},
 		{"huge WOEID", func(c *Client) (json.RawMessage, error) { return c.Trends.Get(ctx, 1_000_000_000_000) }, "WOEID"},
 	}
@@ -238,6 +307,35 @@ func TestValidation(t *testing.T) {
 	}
 	if n := len(rec.all()); n != 0 {
 		t.Fatalf("invalid params sent %d requests", n)
+	}
+}
+
+// handles returns n distinct valid handles.
+func handles(n int) []string {
+	out := make([]string, n)
+	for i := range out {
+		out[i] = fmt.Sprintf("user_%d", i)
+	}
+	return out
+}
+
+func TestBatchLookupsAcceptExactlyMax(t *testing.T) {
+	srv, rec := newServer(t)
+	c, _ := newTestClient(t, srv)
+	ctx := context.Background()
+	// Duplicates do not count towards the limit.
+	targets := append(handles(MaxFriendshipTargets), "USER_0", "@user_1")
+	if _, err := c.Users.FriendshipsBatch(ctx, "jack", targets); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(rec.last(t).URL.Query().Get("target_screen_names"), ",") + 1; got != MaxFriendshipTargets {
+		t.Fatalf("sent %d targets", got)
+	}
+	if _, err := c.Users.AboutBatch(ctx, append(handles(MaxAboutUsernames), "User_19")); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(rec.last(t).URL.Query().Get("usernames"), ",") + 1; got != MaxAboutUsernames {
+		t.Fatalf("sent %d usernames", got)
 	}
 }
 

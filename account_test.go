@@ -159,6 +159,20 @@ func accountCases() []accountCase {
 		{"Bookmarks", func(a *AccountService) (json.RawMessage, error) {
 			return a.Bookmarks(ctx, AccountPageParams{Count: 50, Cursor: "c1"})
 		}, "/client/bookmarks", map[string]any{"count": float64(50), "cursor": "c1"}},
+		{"BookmarkFolders", func(a *AccountService) (json.RawMessage, error) { return a.BookmarkFolders(ctx, AccountCursorParams{}) },
+			"/client/bookmarks/folders", map[string]any{}},
+		{"BookmarkFolders cursor", func(a *AccountService) (json.RawMessage, error) {
+			return a.BookmarkFolders(ctx, AccountCursorParams{Cursor: "f1"})
+		}, "/client/bookmarks/folders", map[string]any{"cursor": "f1"}},
+		{"BookmarkFolder", func(a *AccountService) (json.RawMessage, error) {
+			return a.BookmarkFolder(ctx, BookmarkFolderParams{FolderID: " 1700 ", Cursor: "b"})
+		}, "/client/bookmarks/folder", map[string]any{"folder_id": "1700", "cursor": "b"}},
+		{"SearchBookmarks", func(a *AccountService) (json.RawMessage, error) {
+			return a.SearchBookmarks(ctx, SearchBookmarksParams{Query: " golang ", Count: 100, Cursor: "s"})
+		}, "/client/bookmarks/search", map[string]any{"query": "golang", "count": float64(100), "cursor": "s"}},
+		{"SearchBookmarks minimal", func(a *AccountService) (json.RawMessage, error) {
+			return a.SearchBookmarks(ctx, SearchBookmarksParams{Query: "go"})
+		}, "/client/bookmarks/search", map[string]any{"query": "go"}},
 		{"Blocked", func(a *AccountService) (json.RawMessage, error) { return a.Blocked(ctx, AccountPageParams{}) },
 			"/client/blocked", map[string]any{}},
 		{"Muted", func(a *AccountService) (json.RawMessage, error) { return a.Muted(ctx, AccountPageParams{Cursor: "m"}) },
@@ -198,6 +212,9 @@ func accountCases() []accountCase {
 			"/client/communities/join", map[string]any{"community_id": "77"}},
 		{"LeaveCommunity", func(a *AccountService) (json.RawMessage, error) { return a.LeaveCommunity(ctx, "77") },
 			"/client/communities/leave", map[string]any{"community_id": "77"}},
+		{"CommunityMemberships", func(a *AccountService) (json.RawMessage, error) {
+			return a.CommunityMemberships(ctx, AccountCursorParams{Cursor: "cm"})
+		}, "/client/communities/memberships", map[string]any{"cursor": "cm"}},
 
 		// Drafts
 		{"Drafts", func(a *AccountService) (json.RawMessage, error) { return a.Drafts(ctx, DraftsParams{Ascending: true}) },
@@ -211,6 +228,43 @@ func accountCases() []accountCase {
 			"/client/drafts/edit", map[string]any{"draft_tweet_id": "55", "text": "New"}},
 		{"DeleteDraft", func(a *AccountService) (json.RawMessage, error) { return a.DeleteDraft(ctx, "55") },
 			"/client/drafts/delete", map[string]any{"draft_tweet_id": "55"}},
+
+		// Articles
+		{"Articles", func(a *AccountService) (json.RawMessage, error) { return a.Articles(ctx, ArticlesParams{}) },
+			"/client/articles", map[string]any{}},
+		{"Articles all options", func(a *AccountService) (json.RawMessage, error) {
+			return a.Articles(ctx, ArticlesParams{Lifecycle: "Published", UserID: "42", Count: 5, Cursor: "a"})
+		}, "/client/articles", map[string]any{"lifecycle": "published", "user_id": "42", "count": float64(5), "cursor": "a"}},
+		{"Article", func(a *AccountService) (json.RawMessage, error) { return a.Article(ctx, " 1800 ") },
+			"/client/articles/get", map[string]any{"article_id": "1800"}},
+		{"CreateArticle empty", func(a *AccountService) (json.RawMessage, error) { return a.CreateArticle(ctx, CreateArticleParams{}) },
+			"/client/articles/create", map[string]any{}},
+		{"CreateArticle text", func(a *AccountService) (json.RawMessage, error) {
+			return a.CreateArticle(ctx, CreateArticleParams{Title: "Hello", Text: "One\nTwo"})
+		}, "/client/articles/create", map[string]any{"title": "Hello", "text": "One\nTwo"}},
+		{"CreateArticle content state", func(a *AccountService) (json.RawMessage, error) {
+			return a.CreateArticle(ctx, CreateArticleParams{ContentState: json.RawMessage(` {"blocks":[{"text":"Hi"}],"entity_map":[]} `)})
+		}, "/client/articles/create", map[string]any{"content_state": map[string]any{"blocks": []any{map[string]any{"text": "Hi"}}, "entity_map": []any{}}}},
+		{"UpdateArticle title and text", func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1800", Title: Ptr(""), Text: Ptr("Body")})
+		}, "/client/articles/update", map[string]any{"article_id": "1800", "title": "", "text": "Body"}},
+		{"UpdateArticle cover", func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1800", CoverMediaID: " 66 ", CoverMediaCategory: "amplifyvideo"})
+		}, "/client/articles/update", map[string]any{"article_id": "1800", "cover_media_id": "66", "cover_media_category": "AmplifyVideo"}},
+		{"UpdateArticle remove cover", func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1800", RemoveCover: true})
+		}, "/client/articles/update", map[string]any{"article_id": "1800", "remove_cover": true}},
+		{"PublishArticle", func(a *AccountService) (json.RawMessage, error) {
+			return a.PublishArticle(ctx, PublishArticleParams{ArticleID: "1800"})
+		},
+			"/client/articles/publish", map[string]any{"article_id": "1800"}},
+		{"PublishArticle all options", func(a *AccountService) (json.RawMessage, error) {
+			return a.PublishArticle(ctx, PublishArticleParams{ArticleID: "1800", Visibility: ArticlePublic, ReplyControl: ArticleRepliesByInvitation, TweetText: " Read this "})
+		}, "/client/articles/publish", map[string]any{"article_id": "1800", "visibility": "public", "reply_control": "byinvitation", "tweet_text": "Read this"}},
+		{"UnpublishArticle", func(a *AccountService) (json.RawMessage, error) { return a.UnpublishArticle(ctx, "1800") },
+			"/client/articles/unpublish", map[string]any{"article_id": "1800"}},
+		{"DeleteArticle", func(a *AccountService) (json.RawMessage, error) { return a.DeleteArticle(ctx, "1800") },
+			"/client/articles/delete", map[string]any{"article_id": "1800"}},
 
 		// Media
 		{"UploadImage", func(a *AccountService) (json.RawMessage, error) {
@@ -314,8 +368,8 @@ func TestAccountCoverage(t *testing.T) {
 			t.Errorf("no endpoint test for AccountService.%s", name)
 		}
 	}
-	if total != 53 {
-		t.Fatalf("expected 53 account methods, found %d", total)
+	if total != 64 {
+		t.Fatalf("expected 64 account methods, found %d", total)
 	}
 }
 
@@ -328,6 +382,69 @@ func TestAccountValidation(t *testing.T) {
 		call func(a *AccountService) (json.RawMessage, error)
 		want string
 	}{
+		{"bad folder ID", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.BookmarkFolder(ctx, BookmarkFolderParams{FolderID: "abc"})
+		}, "numeric ID"},
+		{"empty bookmark search", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.SearchBookmarks(ctx, SearchBookmarksParams{Query: " "})
+		}, "Query must be"},
+		{"long bookmark search", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.SearchBookmarks(ctx, SearchBookmarksParams{Query: strings.Repeat("é", 501)})
+		}, "longer than 500"},
+		{"bookmark search count", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.SearchBookmarks(ctx, SearchBookmarksParams{Query: "go", Count: 101})
+		}, "count must be"},
+		{"bad lifecycle", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.Articles(ctx, ArticlesParams{Lifecycle: "archived"})
+		}, "Lifecycle must be one of"},
+		{"articles bad user ID", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.Articles(ctx, ArticlesParams{UserID: "me"})
+		}, "numeric ID"},
+		{"articles count", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.Articles(ctx, ArticlesParams{Count: 101})
+		}, "count must be"},
+		{"bad article ID", testSession, func(a *AccountService) (json.RawMessage, error) { return a.Article(ctx, "") }, "numeric ID"},
+		{"create article text and state", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.CreateArticle(ctx, CreateArticleParams{Text: "x", ContentState: json.RawMessage(`{"blocks":[],"entity_map":[]}`)})
+		}, "not both"},
+		{"create article bad state", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.CreateArticle(ctx, CreateArticleParams{ContentState: json.RawMessage(`{"blocks":{}}`)})
+		}, "ContentState must be"},
+		{"create article state without entity map", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.CreateArticle(ctx, CreateArticleParams{ContentState: json.RawMessage(`{"blocks":[]}`)})
+		}, "ContentState must be"},
+		{"update article no ID", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{Title: Ptr("x")})
+		}, "numeric ID"},
+		{"update article nothing", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1"})
+		}, "at least one"},
+		{"update article text and state", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1", Text: Ptr(""), ContentState: json.RawMessage(`{"blocks":[],"entity_map":[]}`)})
+		}, "not both"},
+		{"update article bad cover", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1", CoverMediaID: "abc"})
+		}, "numeric ID"},
+		{"update article bad cover category", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1", CoverMediaID: "6", CoverMediaCategory: "Photo"})
+		}, "CoverMediaCategory must be one of"},
+		{"update article category without cover", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1", CoverMediaCategory: ArticleCoverGIF})
+		}, "needs CoverMediaID"},
+		{"update article cover and remove", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1", CoverMediaID: "6", RemoveCover: true})
+		}, "not both"},
+		{"publish article bad visibility", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.PublishArticle(ctx, PublishArticleParams{ArticleID: "1", Visibility: "private"})
+		}, "Visibility must be one of"},
+		{"publish article bad reply control", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.PublishArticle(ctx, PublishArticleParams{ArticleID: "1", ReplyControl: "only_follows"})
+		}, "ReplyControl must be one of"},
+		{"publish article long text", testSession, func(a *AccountService) (json.RawMessage, error) {
+			return a.PublishArticle(ctx, PublishArticleParams{ArticleID: "1", TweetText: strings.Repeat("ü", 257)})
+		}, "longer than 256"},
+		{"unpublish article bad ID", testSession, func(a *AccountService) (json.RawMessage, error) { return a.UnpublishArticle(ctx, "x") }, "numeric ID"},
+		{"delete article bad ID", testSession, func(a *AccountService) (json.RawMessage, error) { return a.DeleteArticle(ctx, "1 2") }, "numeric ID"},
 		{"no cookie", XSession{Proxy: testProxy}, func(a *AccountService) (json.RawMessage, error) { return a.Like(ctx, "20") }, "Cookie must be"},
 		{"no proxy", XSession{Cookie: testCookie, Proxy: " "}, func(a *AccountService) (json.RawMessage, error) { return a.DMSettings(ctx) }, "Proxy must be"},
 		{"bad tweet ID", testSession, func(a *AccountService) (json.RawMessage, error) { return a.Like(ctx, "abc") }, "numeric ID"},
@@ -499,6 +616,39 @@ func TestAccountRetries(t *testing.T) {
 		}, 2, false},
 		{"like retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
 			return a.Like(ctx, "1")
+		}, 2, false},
+		{"create article not retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.CreateArticle(ctx, CreateArticleParams{Title: "x"})
+		}, 1, true},
+		{"update article not retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.UpdateArticle(ctx, UpdateArticleParams{ArticleID: "1", Title: Ptr("x")})
+		}, 1, true},
+		{"publish article not retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.PublishArticle(ctx, PublishArticleParams{ArticleID: "1"})
+		}, 1, true},
+		{"unpublish article not retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.UnpublishArticle(ctx, "1")
+		}, 1, true},
+		{"delete article not retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.DeleteArticle(ctx, "1")
+		}, 1, true},
+		{"publish article retried on 429", []response{limited, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.PublishArticle(ctx, PublishArticleParams{ArticleID: "1"})
+		}, 2, false},
+		{"article read retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.Article(ctx, "1")
+		}, 2, false},
+		{"articles list retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.Articles(ctx, ArticlesParams{})
+		}, 2, false},
+		{"bookmark folders retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.BookmarkFolders(ctx, AccountCursorParams{})
+		}, 2, false},
+		{"bookmark search retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.SearchBookmarks(ctx, SearchBookmarksParams{Query: "go"})
+		}, 2, false},
+		{"community memberships retried on 5xx", []response{fail, ok}, func(a *AccountService) (json.RawMessage, error) {
+			return a.CommunityMemberships(ctx, AccountCursorParams{})
 		}, 2, false},
 	}
 	for _, tc := range cases {

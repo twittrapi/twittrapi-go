@@ -72,8 +72,8 @@ func maskProxy(proxy string) string {
 }
 
 // AccountService groups account actions (write endpoints): posting, liking, following,
-// lists, communities, drafts, media uploads, profile edits and direct messages, run as the
-// X account of an [XSession]. Get one with [Client.Account].
+// bookmarks, lists, communities, drafts, articles, media uploads, profile edits and direct
+// messages, run as the X account of an [XSession]. Get one with [Client.Account].
 //
 // Every call sends a POST to /client/... with the session's cookie and proxy in the JSON
 // body. Responses are returned as received; most are the wrapper {"status_code": ...,
@@ -82,8 +82,9 @@ func maskProxy(proxy string) string {
 // error with the wrapper in [APIError.Body].
 //
 // Actions that create something (a tweet, reply, upload, list, community, draft, report or
-// message) are retried only after a 429, never after a timeout, network error or 5xx,
-// because the action may already have run. Other actions are retried as usual.
+// message) and every article change (create, update, publish, unpublish, delete) are
+// retried only after a 429, never after a timeout, network error or 5xx, because the
+// action may already have run. Other actions are retried as usual.
 //
 // An AccountService is safe for concurrent use. It never prints the session: String and
 // GoString are masked.
@@ -254,6 +255,31 @@ func (p AccountPageParams) PageCursor() string { return p.Cursor }
 func (p AccountPageParams) WithCursor(cursor string) AccountPageParams {
 	p.Cursor = cursor
 	return p
+}
+
+// AccountCursorParams selects a page for account reads that take only a cursor, such as
+// [AccountService.BookmarkFolders] and [AccountService.CommunityMemberships].
+type AccountCursorParams struct {
+	// Cursor requests a specific page. Leave empty for the first page.
+	Cursor string
+}
+
+// PageCursor returns p.Cursor. It implements [Pageable].
+func (p AccountCursorParams) PageCursor() string { return p.Cursor }
+
+// WithCursor returns a copy of p with Cursor set. It implements [Pageable].
+func (p AccountCursorParams) WithCursor(cursor string) AccountCursorParams {
+	p.Cursor = cursor
+	return p
+}
+
+// cursorFields returns fields with cursor, if set.
+func cursorFields(cursor string) fields {
+	f := fields{}
+	if cursor != "" {
+		f["cursor"] = cursor
+	}
+	return f
 }
 
 // addPage validates count and adds count and cursor to f.

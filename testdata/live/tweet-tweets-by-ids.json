@@ -1,0 +1,375 @@
+{
+ "data": {
+  "tweetResult": [
+   {
+    "result": {
+     "__typename": "Tweet",
+     "card": {
+      "legacy": {
+       "binding_values": [
+        {
+         "key": "photo_image_full_size_large",
+         "value": {
+          "image_value": {
+           "height": 419,
+           "url": "https://pbs.twimg.com/card_img/2107952823128182784/RyT0hE6P?format=jpg&name=800x419",
+           "width": 800
+          },
+          "type": "IMAGE"
+         }
+        },
+        {
+         "key": "thumbnail_image",
+         "value": {
+          "image_value": {
+           "height": 150,
+           "url": "https://pbs.twimg.com/card_img/2107952823128182784/RyT0hE6P?format=jpg&name=280x150",
+           "width": 218
+          },
+          "type": "IMAGE"
+         }
+        },
+        {
+         "key": "description",
+         "value": {
+          "string_value": "Use the X API with an all-new Developer Console and consumption-based billing. No fixed monthly costs, no monthly caps.",
+          "type": "STRING"
+         }
+        }
+       ],
+       "card_platform": {
+        "platform": {
+         "audience": {
+          "name": "production"
+         },
+         "device": {
+          "name": "Swift",
+          "version": "12"
+         }
+        }
+       },
+       "name": "summary_large_image",
+       "url": "https://t.co/FS66GuIYJD",
+       "user_refs_results": []
+      },
+      "rest_id": "https://t.co/FS66GuIYJD"
+     },
+     "core": {
+      "user_results": {
+       "result": {
+        "__typename": "User",
+        "affiliates_highlighted_label": {
+         "label": {
+          "badge": {
+           "url": "https://pbs.twimg.com/profile_images/1955359038532653056/OSHY3ewP_bigger.jpg"
+          },
+          "description": "X",
+          "url": {
+           "url": "https://twitter.com/X",
+           "urlType": "DeepLink"
+          },
+          "userLabelDisplayType": "Badge",
+          "userLabelType": "BusinessLabel"
+         }
+        },
+        "has_graduated_access": true,
+        "id": "VXNlcjoyMjQ0OTk0OTQ1",
+        "is_blue_verified": true,
+        "legacy": {
+         "blocked_by": false,
+         "blocking": false,
+         "can_dm": true,
+         "can_media_tag": true,
+         "created_at": "Sat Dec 14 04:35:55 +0000 2013",
+         "default_profile": false,
+         "default_profile_image": false,
+         "description": "The voice of the X Dev team and your official source for updates, news, and events, related to the X API.",
+         "entities": {
+          "description": {},
+          "url": {
+           "urls": [
+            {
+             "display_url": "docs.x.com",
+             "expanded_url": "https://docs.x.com/",
+             "indices": [
+              0,
+              23
+             ],
+             "url": "https://t.co/NIwHVIVyrN"
+            }
+           ]
+          }
+         },
+         "fast_followers_count": 0,
+         "favourites_count": 2758,
+         "follow_request_sent": false,
+         "followed_by": false,
+         "followers_count": 698074,
+         "following": false,
+         "friends_count": 770,
+         "has_custom_timelines": true,
+         "is_translator": false,
+         "listed_count": 2977,
+         "location": "127.0.0.1",
+         "media_count": 832,
+         "muting": false,
+         "name": "Developers",
+         "needs_phone_verification": false,
+         "normal_followers_count": 698074,
+         "notifications": false,
+         "pinned_tweet_ids_str": [
+          "2019881223666233717"
+         ],
+         "possibly_sensitive": false,
+         "profile_banner_url": "https://pbs.twimg.com/profile_banners/2244994945/1690213128",
+         "profile_image_url_https": "https://pbs.twimg.com/profile_images/1683501992314798080/xl1POYLw_normal.jpg",
+         "profile_interstitial_type": "",
+         "protected": false,
+         "screen_name": "XDevelopers",
+         "statuses_count": 4376,
+         "time_zone": "",
+         "translator_type": "regular",
+         "url": "https://t.co/NIwHVIVyrN",
+         "utc_offset": 0,
+         "verified": false,
+         "verified_type": "Business",
+         "want_retweets": false,
+         "withheld_description": "",
+         "withheld_scope": ""
+        },
+        "parody_commentary_fan_label": "None",
+        "professional": {
+         "category": [
+          {
+           "icon_name": "IconBriefcaseStroke",
+           "id": 1009,
+           "name": "Community"
+          }
+         ],
+         "professional_type": "Business",
+         "rest_id": "1516891231749517312"
+        },
+        "profile_image_shape": "Square",
+        "rest_id": "2244994945",
+        "super_follow_eligible": false,
+        "super_followed_by": false,
+        "super_following": false,
+        "tipjar_settings": {}
+       }
+      }
+     },
+     "edit_control": {
+      "edit_tweet_ids": [
+       "2019881223666233717"
+      ],
+      "editable_until_msecs": "1770415785000",
+      "edits_remaining": "5",
+      "is_edit_eligible": false
+     },
+     "grok_analysis_button": true,
+     "is_translatable": false,
+     "legacy": {
+      "bookmark_count": 2803,
+      "bookmarked": false,
+      "conversation_id_str": "2019881223666233717",
+      "created_at": "Fri Feb 06 21:09:45 +0000 2026",
+      "display_text_range": [
+       0,
+       261
+      ],
+      "entities": {
+       "urls": [
+        {
+         "display_url": "developer.x.com",
+         "expanded_url": "http://developer.x.com",
+         "indices": [
+          238,
+          261
+         ],
+         "url": "https://t.co/FS66GuIYJD"
+        }
+       ]
+      },
+      "favorite_count": 5599,
+      "favorited": false,
+      "full_text": "Officially launching X API Pay-Per-Use\n\nThe core of X developers are indie builders, early stage products, startups, and hobbyists\n\nIt’s time to open up our X API ecosystem and instill a new wave of next generation X apps\n\nWe’re so back. https://t.co/FS66GuIYJD",
+      "id_str": "2019881223666233717",
+      "is_quote_status": false,
+      "lang": "en",
+      "possibly_sensitive": false,
+      "possibly_sensitive_editable": true,
+      "quote_count": 596,
+      "reply_count": 791,
+      "retweet_count": 896,
+      "retweeted": false,
+      "user_id_str": "2244994945"
+     },
+     "rest_id": "2019881223666233717",
+     "unmention_data": {},
+     "views": {
+      "count": "2552260",
+      "state": "EnabledWithCount"
+     }
+    }
+   },
+   {
+    "result": {
+     "__typename": "Tweet",
+     "core": {
+      "user_results": {
+       "result": {
+        "__typename": "User",
+        "action_counts": {
+         "favorites_count": 41052
+        },
+        "affiliates_highlighted_label": {
+         "label": {
+          "badge": {
+           "url": "https://pbs.twimg.com/profile_images/1285655593592791040/HtwPZgej_bigger.jpg"
+          },
+          "description": "Square",
+          "url": {
+           "url": "https://twitter.com/Square",
+           "urlType": "DeepLink"
+          },
+          "userLabelDisplayType": "Badge",
+          "userLabelType": "BusinessLabel"
+         }
+        },
+        "avatar": {
+         "image_url": "https://pbs.twimg.com/profile_images/1661201415899951105/azNjKOSH_normal.jpg"
+        },
+        "banner": {
+         "image_url": "https://pbs.twimg.com/profile_banners/12/1742427520"
+        },
+        "core": {
+         "created_at": "Tue Mar 21 20:50:14 +0000 2006",
+         "name": "jack",
+         "screen_name": "jack"
+        },
+        "follow_request_sent": false,
+        "has_graduated_access": true,
+        "id": "VXNlcjoxMg==",
+        "is_blue_verified": true,
+        "location": {
+         "location": ""
+        },
+        "media_permissions": {
+         "can_media_tag": true
+        },
+        "notifications_settings": {
+         "notifications_enabled": false
+        },
+        "parody_commentary_fan_label": "None",
+        "pinned_items": {
+         "tweet_ids_str": [
+          "1833951636005552366"
+         ]
+        },
+        "possibly_sensitive": false,
+        "privacy": {
+         "protected": false
+        },
+        "profile_bio": {
+         "description": "no state is the best state",
+         "entities": {
+          "description": {},
+          "url": {
+           "urls": [
+            {
+             "display_url": "primal.net/jack",
+             "expanded_url": "http://primal.net/jack",
+             "indices": [
+              0,
+              23
+             ],
+             "url": "https://t.co/ZEpOg6rn5L"
+            }
+           ]
+          }
+         }
+        },
+        "profile_description_language": "en",
+        "profile_image_shape": "Circle",
+        "profile_metadata": {
+         "profile_interstitial_type": ""
+        },
+        "profile_translation": {
+         "translator_type": "regular"
+        },
+        "relationship_counts": {
+         "followers": 12546632,
+         "following": 3
+        },
+        "relationship_perspectives": {
+         "blocked_by": false,
+         "blocking": false,
+         "followed_by": false,
+         "following": false,
+         "live_following": false,
+         "muting": false
+        },
+        "rest_id": "12",
+        "super_follow_eligible": false,
+        "super_followed_by": false,
+        "super_following": false,
+        "tipjar_settings": {
+         "is_enabled": true
+        },
+        "tweet_counts": {
+         "media_tweets": 2976,
+         "tweets": 31105
+        },
+        "verification": {
+         "verified": false
+        },
+        "website": {
+         "url": "https://t.co/ZEpOg6rn5L"
+        }
+       }
+      }
+     },
+     "edit_control": {
+      "edit_tweet_ids": [
+       "20"
+      ],
+      "editable_until_msecs": "1142976014000",
+      "edits_remaining": "5",
+      "is_edit_eligible": true
+     },
+     "grok_analysis_button": true,
+     "has_birdwatch_notes": true,
+     "is_translatable": false,
+     "legacy": {
+      "bookmark_count": 21970,
+      "bookmarked": false,
+      "conversation_id_str": "20",
+      "created_at": "Tue Mar 21 20:50:14 +0000 2006",
+      "display_text_range": [
+       0,
+       24
+      ],
+      "entities": {},
+      "favorite_count": 309561,
+      "favorited": false,
+      "full_text": "just setting up my twttr",
+      "id_str": "20",
+      "is_quote_status": false,
+      "lang": "en",
+      "quote_count": 7349,
+      "reply_count": 18116,
+      "retweet_count": 124562,
+      "retweeted": false,
+      "user_id_str": "12"
+     },
+     "rest_id": "20",
+     "unmention_data": {},
+     "views": {
+      "state": "Enabled"
+     }
+    }
+   },
+   {}
+  ]
+ }
+}

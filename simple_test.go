@@ -183,6 +183,7 @@ func TestSimpleFixturesMatchStructs(t *testing.T) {
 		"user-userid-articles":                   pages["tweets"],
 		"communities-communityid-tweets":         pages["tweets"],
 		"lists-tweets":                           pages["tweets"],
+		"tweet-tweets-by-ids":                    pages["tweets"],
 		"tweet-tweetid-favorites":                pages["users"],
 		"tweet-tweetid-retweets":                 pages["users"],
 		"user-userid-followers":                  pages["users"],
@@ -567,5 +568,37 @@ func TestNewPublicReadsAreRetried(t *testing.T) {
 		if n := len(rec.all()); n != 2 {
 			t.Errorf("%s: %d requests, want 2", name, n)
 		}
+	}
+}
+
+// Tweets.GetMany: the raw answer has one entry per requested ID ({} for an ID without a
+// tweet); the simple answer leaves those IDs out and keeps request order.
+func TestTweetsByIDsFixtures(t *testing.T) {
+	var raw struct {
+		Data struct {
+			TweetResult []map[string]json.RawMessage `json:"tweetResult"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal([]byte(liveFixture(t, "tweet-tweets-by-ids")), &raw); err != nil {
+		t.Fatal(err)
+	}
+	entries := raw.Data.TweetResult
+	if len(entries) != 3 || len(entries[2]) != 0 || entries[0]["result"] == nil {
+		t.Fatalf("raw entries = %d, last = %v", len(entries), entries[len(entries)-1])
+	}
+
+	page, err := DecodeSimplePage[SimpleTweet](simpleFixture(t, "tweet-tweets-by-ids"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.HasNextPage || page.Next() != "" {
+		t.Fatalf("cursor: has=%v next=%q", page.HasNextPage, page.Next())
+	}
+	var ids []string
+	for _, tw := range page.Data {
+		ids = append(ids, tw.ID)
+	}
+	if strings.Join(ids, ",") != "2019881223666233717,20" {
+		t.Fatalf("ids = %v", ids)
 	}
 }

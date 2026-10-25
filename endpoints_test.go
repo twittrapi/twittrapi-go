@@ -94,6 +94,9 @@ func endpointCases() []endpointCase {
 		{"Tweets.Replies with options", func(c *Client) (json.RawMessage, error) {
 			return c.Tweets.Replies(ctx, RepliesParams{TweetID: "20", RankingMode: RankingLikes, IncludePromotedContent: true, Cursor: "r"})
 		}, "/tweet/20/replies", url.Values{"rankingMode": {"Likes"}, "includePromotedContent": {"true"}, "cursor": {"r"}}},
+		{"Tweets.GetMany", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.GetMany(ctx, []string{"20", " 1585841080431321088 "})
+		}, "/tweet/tweets/by/ids", url.Values{"ids": {"20,1585841080431321088"}}},
 		{"Tweets.Thread", func(c *Client) (json.RawMessage, error) {
 			return c.Tweets.Thread(ctx, ThreadParams{TweetID: "20"})
 		}, "/tweet/20/thread", url.Values{}},
@@ -169,7 +172,7 @@ func TestEndpoints(t *testing.T) {
 	}
 }
 
-// TestEndpointCoverage makes sure there are 30 service methods and that each one has a row
+// TestEndpointCoverage makes sure there are 31 service methods and that each one has a row
 // in endpointCases.
 func TestEndpointCoverage(t *testing.T) {
 	services := map[string]any{
@@ -192,8 +195,8 @@ func TestEndpointCoverage(t *testing.T) {
 			}
 		}
 	}
-	if total != 30 {
-		t.Fatalf("expected 30 endpoint methods, found %d", total)
+	if total != 31 {
+		t.Fatalf("expected 31 endpoint methods, found %d", total)
 	}
 }
 
@@ -202,6 +205,10 @@ func TestValidation(t *testing.T) {
 	many := make([]string, MaxUsersPerLookup+1)
 	for i := range many {
 		many[i] = fmt.Sprint(i + 1)
+	}
+	manyTweets := make([]string, MaxTweetsPerLookup+1)
+	for i := range manyTweets {
+		manyTweets[i] = fmt.Sprint(i + 1)
 	}
 	cases := []struct {
 		name string
@@ -214,6 +221,11 @@ func TestValidation(t *testing.T) {
 		{"no IDs", func(c *Client) (json.RawMessage, error) { return c.Users.GetMany(ctx, nil) }, "at least one"},
 		{"501 IDs", func(c *Client) (json.RawMessage, error) { return c.Users.GetMany(ctx, many) }, "at most 500"},
 		{"bad ID in list", func(c *Client) (json.RawMessage, error) { return c.Users.GetMany(ctx, []string{"1", "x"}) }, "numeric ID"},
+		{"no tweet IDs", func(c *Client) (json.RawMessage, error) { return c.Tweets.GetMany(ctx, nil) }, "at least one"},
+		{"101 tweet IDs", func(c *Client) (json.RawMessage, error) { return c.Tweets.GetMany(ctx, manyTweets) }, "at most 100"},
+		{"bad tweet ID in list", func(c *Client) (json.RawMessage, error) {
+			return c.Tweets.GetMany(ctx, []string{"20", "12a"})
+		}, "numeric ID"},
 		{"timeline without user", func(c *Client) (json.RawMessage, error) { return c.Users.Tweets(ctx, UserTimelineParams{}) }, "UserID or Username"},
 		{"timeline bad ID", func(c *Client) (json.RawMessage, error) {
 			return c.Users.Followers(ctx, UserTimelineParams{UserID: "12a"})
@@ -350,6 +362,21 @@ func TestGetManyAcceptsExactlyMax(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := strings.Count(rec.last(t).URL.Query().Get("ids"), ",") + 1; got != MaxUsersPerLookup {
+		t.Fatalf("sent %d IDs", got)
+	}
+}
+
+func TestTweetsGetManyAcceptsExactlyMax(t *testing.T) {
+	ids := make([]string, MaxTweetsPerLookup)
+	for i := range ids {
+		ids[i] = fmt.Sprint(i + 1)
+	}
+	srv, rec := newServer(t)
+	c, _ := newTestClient(t, srv)
+	if _, err := c.Tweets.GetMany(context.Background(), ids); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(rec.last(t).URL.Query().Get("ids"), ",") + 1; got != MaxTweetsPerLookup {
 		t.Fatalf("sent %d IDs", got)
 	}
 }

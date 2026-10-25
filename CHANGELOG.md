@@ -4,6 +4,16 @@ All notable changes to this module are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `Tweets.GetMany`: up to 100 tweets by numeric ID in one call, billed as one call. Raw format:
+  one entry per ID in request order, `{}` for an ID without a tweet. Simple format: a list of
+  the tweets found, in request order (IDs without a tweet are left out). No IDs, more than 100
+  or a non-numeric ID return an error before any request is sent. `MaxTweetsPerLookup` is
+  exported.
+
 ## [1.2.0] - 2026-10-19
 
 ### Added
@@ -130,6 +140,7 @@ First stable release: the API is stable and follows semantic versioning.
   `All` for range-over-func on Go 1.23+), plus `ExtractCursors` and `ExtractBottomCursor`.
 - Standard library only.
 
+[Unreleased]: https://github.com/twittrapi/twittrapi-go/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/twittrapi/twittrapi-go/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/twittrapi/twittrapi-go/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/twittrapi/twittrapi-go/compare/v0.3.0...v1.0.0

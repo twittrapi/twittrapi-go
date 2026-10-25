@@ -11,6 +11,10 @@ import (
 // call.
 const MaxUsersPerLookup = 500
 
+// MaxTweetsPerLookup is the maximum number of tweet IDs [TweetsService.GetMany] accepts in
+// one call.
+const MaxTweetsPerLookup = 100
+
 // MaxCount is the largest page size accepted by paginated methods.
 const MaxCount = 100
 

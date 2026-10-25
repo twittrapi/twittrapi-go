@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"strings"
 )
 
 // RankingMode sets the sort order of replies returned by [TweetsService.Get],
@@ -136,6 +137,29 @@ func (s *TweetsService) Get(ctx context.Context, p TweetParams) (json.RawMessage
 		return nil, err
 	}
 	return s.client.Get(ctx, "/tweet/"+id, url.Values{"rankingMode": {mode}, "cursor": {p.Cursor}})
+}
+
+// GetMany returns up to [MaxTweetsPerLookup] (100) tweets in one call by numeric tweet ID,
+// billed as one call. In the raw format data.tweetResult has one entry per ID in request
+// order, an empty object for an ID without a tweet (deleted or never existed). In the
+// simple format it is a list of the tweets found, in request order; IDs without a tweet
+// are left out.
+func (s *TweetsService) GetMany(ctx context.Context, tweetIDs []string) (json.RawMessage, error) {
+	if len(tweetIDs) == 0 {
+		return nil, invalidParams("tweetIDs must contain at least one ID")
+	}
+	if len(tweetIDs) > MaxTweetsPerLookup {
+		return nil, invalidParams("tweetIDs accepts at most %d IDs per call, got %d", MaxTweetsPerLookup, len(tweetIDs))
+	}
+	ids := make([]string, len(tweetIDs))
+	for i, raw := range tweetIDs {
+		id, err := numericID("each tweet ID", raw)
+		if err != nil {
+			return nil, err
+		}
+		ids[i] = id
+	}
+	return s.client.Get(ctx, "/tweet/tweets/by/ids", url.Values{"ids": {strings.Join(ids, ",")}})
 }
 
 // Replies returns only the replies to a tweet, without the tweet itself or the tweets

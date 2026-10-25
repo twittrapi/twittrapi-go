@@ -147,6 +147,7 @@ client.Users.AboutBatch(ctx, []string{"jack", "XDevelopers"})                 //
 ```go
 client.Tweets.Get(ctx, twittrapi.TweetParams{TweetID: "20"}) // tweet plus reply thread
 client.Tweets.Get(ctx, twittrapi.TweetParams{TweetID: "20", RankingMode: twittrapi.RankingRecency}) // Relevance | Recency | Likes
+client.Tweets.GetMany(ctx, []string{"20", "1585841080431321088"}) // up to 100 IDs, one call
 client.Tweets.Retweeters(ctx, twittrapi.TweetPageParams{TweetID: "20"})
 client.Tweets.Quotes(ctx, twittrapi.TweetPageParams{TweetID: "20"})
 client.Tweets.Replies(ctx, twittrapi.RepliesParams{TweetID: "20", RankingMode: twittrapi.RankingLikes}) // only the replies

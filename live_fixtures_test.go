@@ -52,6 +52,7 @@ func TestLiveFixturesCursors(t *testing.T) {
 		{"user-usernames-status", "", "", 0, 0},
 		{"user-usernames-to-ids", "", "", 0, 0},
 		{"user-users-by-ids", "", "", 0, 0},
+		{"tweet-tweets-by-ids", "", "", 0, 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.file, func(t *testing.T) {
